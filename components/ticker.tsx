@@ -2,282 +2,255 @@
 
 import { useState, useEffect } from "react"
 import { Badge } from "@/components/ui/badge"
-import {
-  Heart,
-  Users,
-  MapPin,
-  Star,
-  Sparkles,
-  Music,
-  BookOpen,
-  Phone,
-  MessageCircle,
-  Shield,
-  Clock,
-} from "lucide-react"
-
-interface TickerItem {
-  id: string
-  type: "announcement" | "event" | "crisis" | "celebration" | "resource" | "community"
-  content: string
-  timestamp: Date
-  priority: "low" | "medium" | "high" | "urgent"
-  icon: any
-  color: string
-  link?: string
-  location?: string
-  author?: string
-}
+import { Button } from "@/components/ui/button"
+import { Play, Pause, Lock, AlertTriangle, Heart, Users, Sparkles } from "lucide-react"
 
 export function Ticker() {
   const [currentIndex, setCurrentIndex] = useState(0)
-  const [isVisible, setIsVisible] = useState(true)
+  const [isPlaying, setIsPlaying] = useState(true)
+  const [progress, setProgress] = useState(0)
 
-  const tickerItems: TickerItem[] = [
+  const tickerItems = [
     {
-      id: "1",
-      type: "announcement",
-      content:
-        "Welcome to ThriveBMore Liberation Stack! Your safe space for community support and collective action. 💜",
-      timestamp: new Date(),
+      id: 1,
+      message: "🏳️‍⚧️ Welcome to ThriveBMore Liberation Stack - Your digital sanctuary is now active",
       priority: "high",
+      encrypted: true,
+      category: "welcome",
       icon: Heart,
-      color: "from-purple-500 to-pink-500",
-      author: "ThriveBMore Team",
     },
     {
-      id: "2",
-      type: "crisis",
-      content:
-        "Crisis support available 24/7: National Suicide Prevention Lifeline 988 | Trans Lifeline (877) 565-8860",
-      timestamp: new Date(Date.now() - 1000 * 60 * 30),
+      id: 2,
+      message: "🚨 Crisis Support Available 24/7 - Trans Lifeline: 877-565-8860 | National: 988",
       priority: "urgent",
-      icon: Phone,
-      color: "from-red-500 to-red-600",
+      encrypted: true,
+      category: "crisis",
+      icon: AlertTriangle,
     },
     {
-      id: "3",
-      type: "event",
-      content: "LGBTQ+ Support Group meets every Tuesday 7PM at Baltimore LGBT Center - All welcome! 🏳️‍🌈",
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2),
-      priority: "medium",
-      icon: Users,
-      color: "from-blue-500 to-cyan-500",
-      location: "Baltimore LGBT Center",
-    },
-    {
-      id: "4",
-      type: "community",
-      content: "New Little Space activities added! Check out our digital coloring pages and comfort stories. 🧸",
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 4),
-      priority: "medium",
+      id: 3,
+      message: "✨ New: OmniBot AI Companion now includes trauma-informed crisis detection",
+      priority: "high",
+      encrypted: true,
+      category: "feature",
       icon: Sparkles,
-      color: "from-pink-500 to-purple-500",
     },
     {
-      id: "5",
-      type: "resource",
-      content: "Chase Brexton Health Care offers LGBTQ+ affirming healthcare - Now accepting new patients! 🏥",
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 6),
+      id: 4,
+      message: "🎵 Sound Healing Library Updated: 432Hz frequencies, binaural beats, and nature sounds",
       priority: "medium",
-      icon: Shield,
-      color: "from-green-500 to-emerald-500",
+      encrypted: false,
+      category: "wellness",
+      icon: Heart,
     },
     {
-      id: "6",
-      type: "celebration",
-      content: "Celebrating 500+ community members! Thank you for making this space special. ✨",
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 8),
-      priority: "low",
-      icon: Star,
-      color: "from-yellow-500 to-orange-500",
-    },
-    {
-      id: "7",
-      type: "announcement",
-      content: "OmniBot AI companion now features enhanced crisis detection and Baltimore resource integration! 🤖",
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 12),
-      priority: "medium",
-      icon: MessageCircle,
-      color: "from-indigo-500 to-purple-500",
-    },
-    {
-      id: "8",
-      type: "event",
-      content: "Organizing 101 Workshop: Community Building Strategies - Saturday 2PM (Virtual) 📚",
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 18),
-      priority: "medium",
-      icon: BookOpen,
-      color: "from-teal-500 to-blue-500",
-    },
-    {
-      id: "9",
-      type: "resource",
-      content: "New guided meditation added to Audio Library: 'Healing from Trauma' - 20 minutes of gentle support 🎵",
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24),
-      priority: "low",
-      icon: Music,
-      color: "from-violet-500 to-purple-500",
-    },
-    {
-      id: "10",
-      type: "community",
-      content: "Melly's Spot peer support circle growing! Join our community of mutual aid and care. 🤝",
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 36),
-      priority: "medium",
+      id: 5,
+      message: "🤝 Peer Connector: Anonymous matching for community support now available",
+      priority: "high",
+      encrypted: true,
+      category: "community",
       icon: Users,
-      color: "from-rose-500 to-pink-500",
+    },
+    {
+      id: 6,
+      message: "🔒 All communications end-to-end encrypted - Your privacy is sacred",
+      priority: "medium",
+      encrypted: true,
+      category: "security",
+      icon: Lock,
+    },
+    {
+      id: 7,
+      message: "📍 Baltimore Resources: Chase Brexton, Pride Center MD, PFLAG - Safe spaces verified",
+      priority: "medium",
+      encrypted: false,
+      category: "resources",
+      icon: Heart,
+    },
+    {
+      id: 8,
+      message: "🌟 Little Space: Safe environment for age regression and inner child healing",
+      priority: "medium",
+      encrypted: true,
+      category: "wellness",
+      icon: Heart,
+    },
+    {
+      id: 9,
+      message: "💜 Melly's Spot: Community hub for peer support and mutual aid coordination",
+      priority: "medium",
+      encrypted: true,
+      category: "community",
+      icon: Users,
+    },
+    {
+      id: 10,
+      message: "⚡ Emergency Signal: One-tap encrypted distress alert system - Stay safe",
+      priority: "urgent",
+      encrypted: true,
+      category: "emergency",
+      icon: AlertTriangle,
+    },
+    {
+      id: 11,
+      message: "🏛️ SoulVault: Encrypted personal sanctuary for identity documents and memories",
+      priority: "high",
+      encrypted: true,
+      category: "security",
+      icon: Lock,
+    },
+    {
+      id: 12,
+      message: "📧 LiberationMail: Secure trauma-informed communications platform",
+      priority: "medium",
+      encrypted: true,
+      category: "communication",
+      icon: Sparkles,
+    },
+    {
+      id: 13,
+      message: "🌈 Aziza Okoro available for spiritual sessions - Healing in the quantum field",
+      priority: "low",
+      encrypted: false,
+      category: "spiritual",
+      icon: Heart,
+    },
+    {
+      id: 14,
+      message: "🔮 Underground Railroad continues in digital form - Liberation technology for all",
+      priority: "low",
+      encrypted: false,
+      category: "mission",
+      icon: Sparkles,
     },
   ]
 
   useEffect(() => {
+    if (!isPlaying) return
+
     const interval = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % tickerItems.length)
-    }, 8000) // Change every 8 seconds
+      setProgress((prev) => {
+        if (prev >= 100) {
+          setCurrentIndex((current) => (current + 1) % tickerItems.length)
+          return 0
+        }
+        return prev + 2
+      })
+    }, 100)
 
     return () => clearInterval(interval)
-  }, [tickerItems.length])
+  }, [isPlaying, tickerItems.length])
 
   const currentItem = tickerItems[currentIndex]
   const IconComponent = currentItem.icon
 
-  const getPriorityBadge = (priority: string) => {
+  const getPriorityColor = (priority: string) => {
     switch (priority) {
       case "urgent":
-        return <Badge className="bg-red-500 text-white text-xs">URGENT</Badge>
+        return "bg-red-500 text-white"
       case "high":
-        return <Badge className="bg-orange-500 text-white text-xs">HIGH</Badge>
+        return "bg-orange-500 text-white"
       case "medium":
-        return (
-          <Badge variant="outline" className="text-xs">
-            MEDIUM
-          </Badge>
-        )
+        return "bg-blue-500 text-white"
       case "low":
-        return (
-          <Badge variant="secondary" className="text-xs">
-            INFO
-          </Badge>
-        )
+        return "bg-gray-500 text-white"
       default:
-        return null
+        return "bg-purple-500 text-white"
     }
   }
 
-  const formatTimeAgo = (timestamp: Date) => {
-    const now = new Date()
-    const diffInMinutes = Math.floor((now.getTime() - timestamp.getTime()) / (1000 * 60))
-
-    if (diffInMinutes < 1) return "Just now"
-    if (diffInMinutes < 60) return `${diffInMinutes}m ago`
-
-    const diffInHours = Math.floor(diffInMinutes / 60)
-    if (diffInHours < 24) return `${diffInHours}h ago`
-
-    const diffInDays = Math.floor(diffInHours / 24)
-    return `${diffInDays}d ago`
+  const getCategoryColor = (category: string) => {
+    switch (category) {
+      case "crisis":
+        return "border-red-300 text-red-700"
+      case "emergency":
+        return "border-red-400 text-red-800"
+      case "security":
+        return "border-green-300 text-green-700"
+      case "wellness":
+        return "border-pink-300 text-pink-700"
+      case "community":
+        return "border-blue-300 text-blue-700"
+      case "spiritual":
+        return "border-purple-300 text-purple-700"
+      default:
+        return "border-gray-300 text-gray-700"
+    }
   }
 
-  if (!isVisible) return null
-
   return (
-    <div className="bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 text-white py-3 relative overflow-hidden">
-      {/* Background animation */}
-      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-pulse"></div>
+    <div className="bg-gradient-to-r from-purple-900/20 to-pink-900/20 border-y border-purple-200/50 py-2 relative overflow-hidden sigil-pattern">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent"></div>
 
-      <div className="container mx-auto px-4 relative">
-        <div className="flex items-center justify-between">
-          {/* Left side - Ticker content */}
-          <div className="flex items-center gap-4 flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <div
-                className={`w-8 h-8 bg-gradient-to-r ${currentItem.color} rounded-full flex items-center justify-center`}
-              >
-                <IconComponent className="w-4 h-4 text-white" />
-              </div>
-              <span className="text-sm font-semibold uppercase tracking-wide">
-                {currentItem.type.replace("_", " ")}
-              </span>
-              {getPriorityBadge(currentItem.priority)}
+      <div className="container mx-auto px-4 relative z-10">
+        <div className="flex items-center gap-4">
+          {/* Ticker Label */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center mystical-glow">
+              <IconComponent className="w-4 h-4 text-white" />
             </div>
+            <span className="text-sm font-semibold text-purple-800 hidden sm:block">Liberation Feed</span>
+          </div>
 
-            <div className="flex-1 min-w-0">
-              <p className="text-sm md:text-base truncate md:whitespace-normal">{currentItem.content}</p>
+          {/* Progress Bar */}
+          <div className="w-16 h-1 bg-purple-200 rounded-full overflow-hidden flex-shrink-0">
+            <div
+              className="h-full bg-gradient-to-r from-purple-500 to-pink-500 transition-all duration-100 ease-linear"
+              style={{ width: `${progress}%` }}
+            ></div>
+          </div>
 
-              <div className="flex items-center gap-4 text-xs text-white/80 mt-1">
-                <span className="flex items-center gap-1">
-                  <Clock className="w-3 h-3" />
-                  {formatTimeAgo(currentItem.timestamp)}
-                </span>
-
-                {currentItem.location && (
-                  <span className="flex items-center gap-1">
-                    <MapPin className="w-3 h-3" />
-                    {currentItem.location}
-                  </span>
-                )}
-
-                {currentItem.author && (
-                  <span className="flex items-center gap-1">
-                    <Users className="w-3 h-3" />
-                    {currentItem.author}
-                  </span>
+          {/* Ticker Content */}
+          <div className="flex-1 overflow-hidden">
+            <div className="flex items-center gap-3 carousel-slide">
+              <div className="flex items-center gap-2">
+                <Badge className={getPriorityColor(currentItem.priority)} variant="secondary">
+                  {currentItem.priority.toUpperCase()}
+                </Badge>
+                <Badge variant="outline" className={getCategoryColor(currentItem.category)}>
+                  {currentItem.category}
+                </Badge>
+                {currentItem.encrypted && (
+                  <Badge className="encrypted-badge">
+                    <Lock className="w-2 h-2 mr-1" />
+                    E2E
+                  </Badge>
                 )}
               </div>
+              <span className="text-sm text-gray-700 font-medium whitespace-nowrap">{currentItem.message}</span>
             </div>
           </div>
 
-          {/* Right side - Controls */}
-          <div className="flex items-center gap-3 flex-shrink-0">
-            {/* Ticker navigation dots */}
-            <div className="hidden md:flex items-center gap-1">
-              {tickerItems.slice(0, 5).map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => setCurrentIndex(index)}
-                  className={`w-2 h-2 rounded-full transition-all ${
-                    index === currentIndex % 5 ? "bg-white" : "bg-white/40"
-                  }`}
-                />
-              ))}
-            </div>
-
-            {/* Progress indicator */}
-            <div className="hidden sm:block text-xs text-white/80">
-              {currentIndex + 1} / {tickerItems.length}
-            </div>
-
-            {/* Close button */}
-            <button
-              onClick={() => setIsVisible(false)}
-              className="w-6 h-6 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-colors"
-              aria-label="Close ticker"
+          {/* Controls */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setIsPlaying(!isPlaying)}
+              className="w-8 h-8 p-0 hover:bg-purple-100"
+              title={isPlaying ? "Pause ticker" : "Play ticker"}
             >
-              <span className="text-sm">×</span>
-            </button>
-          </div>
-        </div>
+              {isPlaying ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
+            </Button>
 
-        {/* Progress bar */}
-        <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20">
-          <div
-            className="h-full bg-white transition-all duration-8000 ease-linear"
-            style={{
-              width: `${((currentIndex + 1) / tickerItems.length) * 100}%`,
-              animation: "ticker-progress 8s linear infinite",
-            }}
-          />
+            <div className="text-xs text-gray-500 hidden sm:block">
+              {currentIndex + 1}/{tickerItems.length}
+            </div>
+          </div>
         </div>
       </div>
 
-      <style jsx>{`
-        @keyframes ticker-progress {
-          0% { width: 0%; }
-          100% { width: 100%; }
-        }
-      `}</style>
+      {/* Aziza Sigil Watermark */}
+      <div
+        className="absolute top-0 right-0 w-16 h-full opacity-5 pointer-events-none"
+        style={{
+          backgroundImage: "url('/aziza-sigil-branding.png')",
+          backgroundSize: "contain",
+          backgroundRepeat: "no-repeat",
+          backgroundPosition: "center right",
+        }}
+      ></div>
     </div>
   )
 }
-
-export default Ticker

@@ -1,484 +1,663 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Slider } from "@/components/ui/slider"
-import { Volume2, VolumeX, Play, Pause, RotateCcw, Waves, Wind, Zap, Moon } from "lucide-react"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import {
+  Play,
+  Pause,
+  Volume2,
+  VolumeX,
+  SkipForward,
+  SkipBack,
+  Shuffle,
+  Repeat,
+  X,
+  Heart,
+  Waves,
+  Zap,
+  Moon,
+  Sun,
+  TreePine,
+  CloudRain,
+  Wind,
+  Music,
+} from "lucide-react"
 
-interface SoundEffect {
-  id: string
-  name: string
-  category: string
-  icon: any
-  frequency: number
-  type: "oscillator" | "noise" | "nature"
-  color: string
-  description: string
+interface SoundEffectsProps {
+  isVisible: boolean
+  onClose: () => void
 }
 
-export function SoundEffects() {
-  const [isPlaying, setIsPlaying] = useState<Record<string, boolean>>({})
-  const [volumes, setVolumes] = useState<Record<string, number>>({})
-  const [masterVolume, setMasterVolume] = useState([70])
-  const [isMuted, setIsMuted] = useState(false)
-  const audioContextRef = useRef<AudioContext | null>(null)
-  const oscillatorsRef = useRef<Record<string, OscillatorNode>>({})
-  const gainNodesRef = useRef<Record<string, GainNode>>({})
-  const masterGainRef = useRef<GainNode | null>(null)
+interface AudioTrack {
+  id: string
+  title: string
+  category: string
+  frequency?: number
+  duration: number
+  description: string
+  icon: any
+  color: string
+  isPlaying?: boolean
+  volume?: number
+}
 
-  const soundEffects: SoundEffect[] = [
+export function SoundEffects({ isVisible, onClose }: SoundEffectsProps) {
+  const [currentTrack, setCurrentTrack] = useState<AudioTrack | null>(null)
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [volume, setVolume] = useState([70])
+  const [currentTime, setCurrentTime] = useState(0)
+  const [isShuffled, setIsShuffled] = useState(false)
+  const [isRepeating, setIsRepeating] = useState(false)
+  const [activeCategory, setActiveCategory] = useState("healing")
+
+  const audioContextRef = useRef<AudioContext | null>(null)
+  const oscillatorRef = useRef<OscillatorNode | null>(null)
+  const gainNodeRef = useRef<GainNode | null>(null)
+  const intervalRef = useRef<NodeJS.Timeout | null>(null)
+
+  const healingTracks: AudioTrack[] = [
     {
-      id: "rain",
-      name: "Gentle Rain",
-      category: "nature",
-      icon: Waves,
-      frequency: 200,
-      type: "noise",
-      color: "from-blue-400 to-cyan-400",
-      description: "Soothing rainfall for relaxation",
-    },
-    {
-      id: "ocean",
-      name: "Ocean Waves",
-      category: "nature",
-      icon: Waves,
-      frequency: 100,
-      type: "noise",
-      color: "from-blue-500 to-teal-500",
-      description: "Rhythmic ocean sounds",
-    },
-    {
-      id: "wind",
-      name: "Forest Wind",
-      category: "nature",
-      icon: Wind,
-      frequency: 150,
-      type: "noise",
-      color: "from-green-400 to-emerald-400",
-      description: "Gentle wind through trees",
-    },
-    {
-      id: "meditation",
-      name: "Meditation Bell",
-      category: "ambient",
-      icon: Zap,
-      frequency: 432,
-      type: "oscillator",
-      color: "from-purple-400 to-violet-400",
-      description: "Healing frequency bell",
-    },
-    {
-      id: "focus",
-      name: "Focus Tone",
-      category: "focus",
-      icon: Zap,
-      frequency: 40,
-      type: "oscillator",
-      color: "from-yellow-400 to-orange-400",
-      description: "Binaural beats for concentration",
-    },
-    {
-      id: "sleep",
-      name: "Sleep Drone",
-      category: "sleep",
-      icon: Moon,
-      frequency: 60,
-      type: "oscillator",
-      color: "from-indigo-400 to-purple-400",
-      description: "Deep sleep induction",
-    },
-    {
-      id: "anxiety",
-      name: "Calm Waves",
+      id: "432hz",
+      title: "432Hz Sacred Frequency",
       category: "healing",
-      icon: Waves,
-      frequency: 528,
-      type: "oscillator",
-      color: "from-pink-400 to-rose-400",
-      description: "Anxiety relief frequency",
+      frequency: 432,
+      duration: 1800, // 30 minutes
+      description: "The frequency of the universe - promotes healing and spiritual connection",
+      icon: Zap,
+      color: "from-yellow-500 to-orange-500",
     },
     {
-      id: "energy",
-      name: "Energy Boost",
-      category: "focus",
-      icon: Zap,
-      frequency: 10,
-      type: "oscillator",
-      color: "from-red-400 to-pink-400",
-      description: "Energizing alpha waves",
+      id: "528hz",
+      title: "528Hz Love Frequency",
+      category: "healing",
+      frequency: 528,
+      duration: 1200, // 20 minutes
+      description: "The frequency of love and DNA repair - promotes transformation",
+      icon: Heart,
+      color: "from-pink-500 to-rose-500",
+    },
+    {
+      id: "741hz",
+      title: "741Hz Cleansing Frequency",
+      category: "healing",
+      frequency: 741,
+      duration: 900, // 15 minutes
+      description: "Cleanses toxins and electromagnetic radiation",
+      icon: Waves,
+      color: "from-blue-500 to-cyan-500",
+    },
+    {
+      id: "binaural-alpha",
+      title: "Alpha Wave Binaural Beats",
+      category: "healing",
+      frequency: 10, // 10Hz alpha waves
+      duration: 1800,
+      description: "Promotes relaxation and creative thinking",
+      icon: Music,
+      color: "from-purple-500 to-indigo-500",
     },
   ]
 
-  // Initialize audio context
+  const natureTracks: AudioTrack[] = [
+    {
+      id: "forest",
+      title: "Enchanted Forest",
+      category: "nature",
+      duration: 2400, // 40 minutes
+      description: "Birds chirping, leaves rustling, gentle forest ambiance",
+      icon: TreePine,
+      color: "from-green-500 to-emerald-500",
+    },
+    {
+      id: "rain",
+      title: "Gentle Rain",
+      category: "nature",
+      duration: 1800,
+      description: "Soft rainfall with distant thunder",
+      icon: CloudRain,
+      color: "from-blue-400 to-blue-600",
+    },
+    {
+      id: "ocean",
+      title: "Ocean Waves",
+      category: "nature",
+      duration: 2100,
+      description: "Rhythmic ocean waves on a peaceful shore",
+      icon: Waves,
+      color: "from-cyan-400 to-blue-500",
+    },
+    {
+      id: "wind",
+      title: "Mountain Wind",
+      category: "nature",
+      duration: 1500,
+      description: "Gentle mountain breeze through trees",
+      icon: Wind,
+      color: "from-gray-400 to-slate-500",
+    },
+  ]
+
+  const meditationTracks: AudioTrack[] = [
+    {
+      id: "breathing",
+      title: "Guided Breathing",
+      category: "meditation",
+      duration: 600, // 10 minutes
+      description: "4-7-8 breathing technique for anxiety relief",
+      icon: Sun,
+      color: "from-yellow-400 to-amber-500",
+    },
+    {
+      id: "body-scan",
+      title: "Body Scan Meditation",
+      category: "meditation",
+      duration: 1200,
+      description: "Progressive relaxation and body awareness",
+      icon: Heart,
+      color: "from-pink-400 to-rose-500",
+    },
+    {
+      id: "loving-kindness",
+      title: "Loving Kindness",
+      category: "meditation",
+      duration: 900,
+      description: "Cultivate compassion for self and others",
+      icon: Heart,
+      color: "from-rose-400 to-pink-500",
+    },
+    {
+      id: "sleep-story",
+      title: "Sleep Story: Starlight Journey",
+      category: "meditation",
+      duration: 1800,
+      description: "Peaceful bedtime story for deep rest",
+      icon: Moon,
+      color: "from-indigo-500 to-purple-600",
+    },
+  ]
+
+  const allTracks = [...healingTracks, ...natureTracks, ...meditationTracks]
+
+  const getCurrentTracks = () => {
+    switch (activeCategory) {
+      case "healing":
+        return healingTracks
+      case "nature":
+        return natureTracks
+      case "meditation":
+        return meditationTracks
+      default:
+        return allTracks
+    }
+  }
+
+  // Initialize Web Audio API
   useEffect(() => {
-    const initAudio = () => {
-      if (!audioContextRef.current) {
-        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)()
-        masterGainRef.current = audioContextRef.current.createGain()
-        masterGainRef.current.connect(audioContextRef.current.destination)
-        masterGainRef.current.gain.value = masterVolume[0] / 100
-      }
+    if (typeof window !== "undefined") {
+      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)()
     }
-
-    // Initialize volumes
-    const initialVolumes: Record<string, number> = {}
-    soundEffects.forEach((sound) => {
-      initialVolumes[sound.id] = 50
-    })
-    setVolumes(initialVolumes)
-
-    // Initialize audio on first user interaction
-    const handleFirstInteraction = () => {
-      initAudio()
-      document.removeEventListener("click", handleFirstInteraction)
-      document.removeEventListener("touchstart", handleFirstInteraction)
-    }
-
-    document.addEventListener("click", handleFirstInteraction)
-    document.addEventListener("touchstart", handleFirstInteraction)
 
     return () => {
-      document.removeEventListener("click", handleFirstInteraction)
-      document.removeEventListener("touchstart", handleFirstInteraction)
-      // Cleanup audio context
       if (audioContextRef.current) {
         audioContextRef.current.close()
       }
     }
   }, [])
 
-  // Update master volume
-  useEffect(() => {
-    if (masterGainRef.current) {
-      masterGainRef.current.gain.value = isMuted ? 0 : masterVolume[0] / 100
-    }
-  }, [masterVolume, isMuted])
+  // Generate audio for frequency-based tracks
+  const generateFrequencyAudio = (frequency: number) => {
+    if (!audioContextRef.current) return
 
-  const createNoiseBuffer = (duration = 2) => {
-    if (!audioContextRef.current) return null
-
-    const bufferSize = audioContextRef.current.sampleRate * duration
-    const buffer = audioContextRef.current.createBuffer(1, bufferSize, audioContextRef.current.sampleRate)
-    const output = buffer.getChannelData(0)
-
-    for (let i = 0; i < bufferSize; i++) {
-      output[i] = Math.random() * 2 - 1
+    // Stop any existing oscillator
+    if (oscillatorRef.current) {
+      oscillatorRef.current.stop()
+      oscillatorRef.current.disconnect()
     }
 
-    return buffer
+    const audioContext = audioContextRef.current
+    const oscillator = audioContext.createOscillator()
+    const gainNode = audioContext.createGain()
+
+    oscillator.type = "sine"
+    oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime)
+
+    // Set volume
+    gainNode.gain.setValueAtTime((volume[0] / 100) * 0.3, audioContext.currentTime) // Keep it gentle
+
+    oscillator.connect(gainNode)
+    gainNode.connect(audioContext.destination)
+
+    oscillator.start()
+    oscillatorRef.current = oscillator
+    gainNodeRef.current = gainNode
   }
 
-  const playSound = (soundId: string) => {
-    if (!audioContextRef.current || !masterGainRef.current) return
+  // Generate nature sounds using Web Audio API
+  const generateNatureAudio = (trackId: string) => {
+    if (!audioContextRef.current) return
 
-    const sound = soundEffects.find((s) => s.id === soundId)
-    if (!sound) return
+    const audioContext = audioContextRef.current
+    const gainNode = audioContext.createGain()
+    gainNode.gain.setValueAtTime((volume[0] / 100) * 0.4, audioContext.currentTime)
 
-    // Stop existing sound if playing
-    if (oscillatorsRef.current[soundId]) {
-      stopSound(soundId)
+    // Create different nature sounds using noise and filters
+    switch (trackId) {
+      case "rain":
+        // Generate rain sound using white noise and filtering
+        const rainBuffer = audioContext.createBuffer(2, audioContext.sampleRate * 2, audioContext.sampleRate)
+        for (let channel = 0; channel < rainBuffer.numberOfChannels; channel++) {
+          const channelData = rainBuffer.getChannelData(channel)
+          for (let i = 0; i < channelData.length; i++) {
+            channelData[i] = (Math.random() * 2 - 1) * 0.1
+          }
+        }
+        const rainSource = audioContext.createBufferSource()
+        rainSource.buffer = rainBuffer
+        rainSource.loop = true
+        rainSource.connect(gainNode)
+        gainNode.connect(audioContext.destination)
+        rainSource.start()
+        break
+
+      case "ocean":
+        // Generate ocean waves using low-frequency oscillation
+        const waveOsc = audioContext.createOscillator()
+        const waveGain = audioContext.createGain()
+        waveOsc.type = "sine"
+        waveOsc.frequency.setValueAtTime(0.1, audioContext.currentTime)
+        waveGain.gain.setValueAtTime(0.3, audioContext.currentTime)
+        waveOsc.connect(waveGain)
+        waveGain.connect(gainNode)
+        gainNode.connect(audioContext.destination)
+        waveOsc.start()
+        break
+
+      default:
+        // Default ambient sound
+        const ambientOsc = audioContext.createOscillator()
+        ambientOsc.type = "sine"
+        ambientOsc.frequency.setValueAtTime(200, audioContext.currentTime)
+        const ambientGain = audioContext.createGain()
+        ambientGain.gain.setValueAtTime(0.1, audioContext.currentTime)
+        ambientOsc.connect(ambientGain)
+        ambientGain.connect(gainNode)
+        gainNode.connect(audioContext.destination)
+        ambientOsc.start()
     }
 
-    // Create gain node for this sound
-    const gainNode = audioContextRef.current.createGain()
-    gainNode.connect(masterGainRef.current)
-    gainNode.gain.value = (volumes[soundId] || 50) / 100
-    gainNodesRef.current[soundId] = gainNode
-
-    if (sound.type === "oscillator") {
-      // Create oscillator
-      const oscillator = audioContextRef.current.createOscillator()
-      oscillator.frequency.setValueAtTime(sound.frequency, audioContextRef.current.currentTime)
-      oscillator.type = "sine"
-
-      // Add some modulation for more interesting sound
-      const lfo = audioContextRef.current.createOscillator()
-      const lfoGain = audioContextRef.current.createGain()
-      lfo.frequency.setValueAtTime(0.5, audioContextRef.current.currentTime)
-      lfo.type = "sine"
-      lfoGain.gain.setValueAtTime(sound.frequency * 0.1, audioContextRef.current.currentTime)
-
-      lfo.connect(lfoGain)
-      lfoGain.connect(oscillator.frequency)
-
-      oscillator.connect(gainNode)
-      oscillator.start()
-      lfo.start()
-
-      oscillatorsRef.current[soundId] = oscillator
-    } else if (sound.type === "noise") {
-      // Create noise buffer
-      const noiseBuffer = createNoiseBuffer()
-      if (noiseBuffer) {
-        const source = audioContextRef.current.createBufferSource()
-        source.buffer = noiseBuffer
-        source.loop = true
-
-        // Filter the noise based on sound type
-        const filter = audioContextRef.current.createBiquadFilter()
-        filter.type = "lowpass"
-        filter.frequency.setValueAtTime(sound.frequency * 10, audioContextRef.current.currentTime)
-        filter.Q.setValueAtTime(1, audioContextRef.current.currentTime)
-
-        source.connect(filter)
-        filter.connect(gainNode)
-        source.start()
-
-        oscillatorsRef.current[soundId] = source as any
-      }
-    }
-
-    setIsPlaying((prev) => ({ ...prev, [soundId]: true }))
+    gainNodeRef.current = gainNode
   }
 
-  const stopSound = (soundId: string) => {
-    if (oscillatorsRef.current[soundId]) {
-      try {
-        oscillatorsRef.current[soundId].stop()
-      } catch (e) {
-        // Oscillator might already be stopped
-      }
-      delete oscillatorsRef.current[soundId]
-    }
+  const playTrack = (track: AudioTrack) => {
+    setCurrentTrack(track)
+    setIsPlaying(true)
+    setCurrentTime(0)
 
-    if (gainNodesRef.current[soundId]) {
-      gainNodesRef.current[soundId].disconnect()
-      delete gainNodesRef.current[soundId]
-    }
-
-    setIsPlaying((prev) => ({ ...prev, [soundId]: false }))
-  }
-
-  const toggleSound = (soundId: string) => {
-    if (isPlaying[soundId]) {
-      stopSound(soundId)
+    if (track.frequency) {
+      generateFrequencyAudio(track.frequency)
+    } else if (track.category === "nature") {
+      generateNatureAudio(track.id)
     } else {
-      playSound(soundId)
+      // For meditation tracks, use a gentle tone
+      generateFrequencyAudio(256) // Middle C
+    }
+
+    // Start timer
+    intervalRef.current = setInterval(() => {
+      setCurrentTime((prev) => {
+        if (prev >= track.duration) {
+          if (isRepeating) {
+            return 0
+          } else {
+            stopTrack()
+            return prev
+          }
+        }
+        return prev + 1
+      })
+    }, 1000)
+  }
+
+  const stopTrack = () => {
+    setIsPlaying(false)
+
+    if (oscillatorRef.current) {
+      oscillatorRef.current.stop()
+      oscillatorRef.current.disconnect()
+      oscillatorRef.current = null
+    }
+
+    if (gainNodeRef.current) {
+      gainNodeRef.current.disconnect()
+      gainNodeRef.current = null
+    }
+
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current)
+      intervalRef.current = null
     }
   }
 
-  const updateSoundVolume = (soundId: string, volume: number) => {
-    setVolumes((prev) => ({ ...prev, [soundId]: volume }))
-
-    if (gainNodesRef.current[soundId]) {
-      gainNodesRef.current[soundId].gain.value = volume / 100
+  const togglePlayPause = () => {
+    if (isPlaying) {
+      stopTrack()
+    } else if (currentTrack) {
+      playTrack(currentTrack)
     }
   }
 
-  const stopAllSounds = () => {
-    Object.keys(isPlaying).forEach((soundId) => {
-      if (isPlaying[soundId]) {
-        stopSound(soundId)
-      }
-    })
+  const nextTrack = () => {
+    const tracks = getCurrentTracks()
+    if (!currentTrack) return
+
+    const currentIndex = tracks.findIndex((t) => t.id === currentTrack.id)
+    const nextIndex = isShuffled ? Math.floor(Math.random() * tracks.length) : (currentIndex + 1) % tracks.length
+
+    stopTrack()
+    playTrack(tracks[nextIndex])
   }
 
-  const categories = ["all", "nature", "ambient", "focus", "sleep", "healing"]
-  const [selectedCategory, setSelectedCategory] = useState("all")
+  const previousTrack = () => {
+    const tracks = getCurrentTracks()
+    if (!currentTrack) return
 
-  const filteredSounds =
-    selectedCategory === "all" ? soundEffects : soundEffects.filter((sound) => sound.category === selectedCategory)
+    const currentIndex = tracks.findIndex((t) => t.id === currentTrack.id)
+    const prevIndex = currentIndex === 0 ? tracks.length - 1 : currentIndex - 1
+
+    stopTrack()
+    playTrack(tracks[prevIndex])
+  }
+
+  // Update volume
+  useEffect(() => {
+    if (gainNodeRef.current && audioContextRef.current) {
+      gainNodeRef.current.gain.setValueAtTime((volume[0] / 100) * 0.3, audioContextRef.current.currentTime)
+    }
+  }, [volume])
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      stopTrack()
+    }
+  }, [])
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60)
+    const secs = seconds % 60
+    return `${mins}:${secs.toString().padStart(2, "0")}`
+  }
+
+  if (!isVisible) return null
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <Card className="liberation-card text-center">
-        <CardHeader>
-          <div className="flex justify-center mb-4">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-cyan-500 to-purple-500 flex items-center justify-center mystical-glow">
-              <Waves className="w-8 h-8 text-white" />
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <Card className="w-full max-w-4xl max-h-[90vh] overflow-hidden liberation-card mystical-glow">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 spiritual-border">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center sacred-breathe">
+              <Volume2 className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <CardTitle className="text-2xl afro-futuristic-text">Sacred Sound Healing</CardTitle>
+              <p className="text-muted-foreground">Therapeutic frequencies and healing audio experiences</p>
             </div>
           </div>
-          <CardTitle className="text-2xl afro-futuristic-text">Sacred Sound Healing</CardTitle>
-          <p className="text-muted-foreground">Therapeutic frequencies and nature sounds for wellness</p>
+          <Button variant="ghost" size="sm" onClick={onClose} className="hover:bg-red-100">
+            <X className="w-4 h-4" />
+          </Button>
         </CardHeader>
-      </Card>
 
-      {/* Master Controls */}
-      <Card className="liberation-card">
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Volume2 className="w-5 h-5 mr-2 text-cyan-400" />
-            Master Controls
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center space-x-4">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsMuted(!isMuted)}
-              className={isMuted ? "bg-red-500/20 border-red-500" : ""}
-            >
-              {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-            </Button>
-            <div className="flex-1">
-              <Slider
-                value={masterVolume}
-                onValueChange={setMasterVolume}
-                max={100}
-                step={1}
-                className="w-full"
-                disabled={isMuted}
-              />
-            </div>
-            <span className="text-sm font-medium w-12">{masterVolume[0]}%</span>
-          </div>
-          <div className="flex justify-center">
-            <Button variant="destructive" size="sm" onClick={stopAllSounds} className="flex items-center">
-              <RotateCcw className="w-4 h-4 mr-2" />
-              Stop All Sounds
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Category Filter */}
-      <Card className="liberation-card">
-        <CardContent className="p-4">
-          <div className="flex flex-wrap gap-2">
-            {categories.map((category) => (
-              <Button
-                key={category}
-                variant={selectedCategory === category ? "default" : "outline"}
-                size="sm"
-                onClick={() => setSelectedCategory(category)}
-                className="capitalize"
-              >
-                {category}
-              </Button>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Sound Effects Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredSounds.map((sound) => (
-          <Card key={sound.id} className="liberation-card">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between mb-3">
-                <div
-                  className={`w-12 h-12 rounded-full bg-gradient-to-r ${sound.color} flex items-center justify-center ${isPlaying[sound.id] ? "spiritual-pulse" : ""}`}
-                >
-                  <sound.icon className="w-6 h-6 text-white" />
+        <CardContent className="space-y-6 overflow-y-auto max-h-[70vh] sigil-pattern">
+          {/* Current Track Player */}
+          {currentTrack && (
+            <Card className="liberation-card">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-4 mb-4">
+                  <div
+                    className={`w-16 h-16 bg-gradient-to-r ${currentTrack.color} rounded-full flex items-center justify-center sacred-breathe`}
+                  >
+                    <currentTrack.icon className="w-8 h-8 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold">{currentTrack.title}</h3>
+                    <p className="text-sm text-muted-foreground">{currentTrack.description}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Badge variant="outline">{currentTrack.category}</Badge>
+                      {currentTrack.frequency && (
+                        <Badge className="encrypted-badge">
+                          <Zap className="w-2 h-2 mr-1" />
+                          {currentTrack.frequency}Hz
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
                 </div>
-                <Badge variant="secondary" className="text-xs capitalize">
-                  {sound.category}
-                </Badge>
-              </div>
 
-              <h3 className="font-semibold text-foreground mb-1">{sound.name}</h3>
-              <p className="text-sm text-muted-foreground mb-3">{sound.description}</p>
+                {/* Progress Bar */}
+                <div className="space-y-2 mb-4">
+                  <div className="flex justify-between text-sm text-muted-foreground">
+                    <span>{formatTime(currentTime)}</span>
+                    <span>{formatTime(currentTrack.duration)}</span>
+                  </div>
+                  <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-green-500 to-emerald-500 transition-all duration-1000"
+                      style={{ width: `${(currentTime / currentTrack.duration) * 100}%` }}
+                    />
+                  </div>
+                </div>
 
-              {sound.type === "oscillator" && (
-                <p className="text-xs text-muted-foreground mb-3">Frequency: {sound.frequency}Hz</p>
-              )}
+                {/* Controls */}
+                <div className="flex items-center justify-center gap-4 mb-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsShuffled(!isShuffled)}
+                    className={isShuffled ? "bg-purple-100" : ""}
+                  >
+                    <Shuffle className="w-4 h-4" />
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={previousTrack}>
+                    <SkipBack className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    size="lg"
+                    onClick={togglePlayPause}
+                    className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
+                  >
+                    {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={nextTrack}>
+                    <SkipForward className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsRepeating(!isRepeating)}
+                    className={isRepeating ? "bg-purple-100" : ""}
+                  >
+                    <Repeat className="w-4 h-4" />
+                  </Button>
+                </div>
 
-              <div className="space-y-3">
                 {/* Volume Control */}
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center gap-3">
+                  <VolumeX className="w-4 h-4 text-muted-foreground" />
+                  <Slider value={volume} onValueChange={setVolume} max={100} step={1} className="flex-1" />
                   <Volume2 className="w-4 h-4 text-muted-foreground" />
-                  <Slider
-                    value={[volumes[sound.id] || 50]}
-                    onValueChange={(value) => updateSoundVolume(sound.id, value[0])}
-                    max={100}
-                    step={1}
-                    className="flex-1"
-                  />
-                  <span className="text-xs w-8">{volumes[sound.id] || 50}%</span>
+                  <span className="text-sm text-muted-foreground w-8">{volume[0]}%</span>
                 </div>
+              </CardContent>
+            </Card>
+          )}
 
-                {/* Play/Pause Button */}
-                <Button
-                  onClick={() => toggleSound(sound.id)}
-                  className={`w-full ${
-                    isPlaying[sound.id]
-                      ? "bg-red-500 hover:bg-red-600"
-                      : `bg-gradient-to-r ${sound.color} hover:opacity-90`
-                  }`}
-                >
-                  {isPlaying[sound.id] ? (
-                    <>
-                      <Pause className="w-4 h-4 mr-2" />
-                      Stop
-                    </>
-                  ) : (
-                    <>
-                      <Play className="w-4 h-4 mr-2" />
-                      Play
-                    </>
-                  )}
-                </Button>
+          {/* Track Categories */}
+          <Tabs value={activeCategory} onValueChange={setActiveCategory}>
+            <TabsList className="grid w-full grid-cols-3 liberation-card">
+              <TabsTrigger value="healing">Healing Frequencies</TabsTrigger>
+              <TabsTrigger value="nature">Nature Sounds</TabsTrigger>
+              <TabsTrigger value="meditation">Guided Meditation</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="healing" className="space-y-4 mt-6">
+              <div className="grid md:grid-cols-2 gap-4">
+                {healingTracks.map((track) => {
+                  const IconComponent = track.icon
+                  const isCurrentTrack = currentTrack?.id === track.id
+
+                  return (
+                    <Card
+                      key={track.id}
+                      className={`liberation-card cursor-pointer transition-all hover:scale-105 ${
+                        isCurrentTrack ? "ring-2 ring-green-500" : ""
+                      }`}
+                      onClick={() => playTrack(track)}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={`w-12 h-12 bg-gradient-to-r ${track.color} rounded-full flex items-center justify-center`}
+                          >
+                            <IconComponent className="w-6 h-6 text-white" />
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="font-semibold">{track.title}</h4>
+                            <p className="text-xs text-muted-foreground mb-2">{track.description}</p>
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className="text-xs">
+                                {formatTime(track.duration)}
+                              </Badge>
+                              {track.frequency && (
+                                <Badge className="encrypted-badge text-xs">
+                                  <Zap className="w-2 h-2 mr-1" />
+                                  {track.frequency}Hz
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                          <Button size="sm" variant="ghost">
+                            {isCurrentTrack && isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )
+                })}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="nature" className="space-y-4 mt-6">
+              <div className="grid md:grid-cols-2 gap-4">
+                {natureTracks.map((track) => {
+                  const IconComponent = track.icon
+                  const isCurrentTrack = currentTrack?.id === track.id
+
+                  return (
+                    <Card
+                      key={track.id}
+                      className={`liberation-card cursor-pointer transition-all hover:scale-105 ${
+                        isCurrentTrack ? "ring-2 ring-green-500" : ""
+                      }`}
+                      onClick={() => playTrack(track)}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={`w-12 h-12 bg-gradient-to-r ${track.color} rounded-full flex items-center justify-center`}
+                          >
+                            <IconComponent className="w-6 h-6 text-white" />
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="font-semibold">{track.title}</h4>
+                            <p className="text-xs text-muted-foreground mb-2">{track.description}</p>
+                            <Badge variant="outline" className="text-xs">
+                              {formatTime(track.duration)}
+                            </Badge>
+                          </div>
+                          <Button size="sm" variant="ghost">
+                            {isCurrentTrack && isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )
+                })}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="meditation" className="space-y-4 mt-6">
+              <div className="grid md:grid-cols-2 gap-4">
+                {meditationTracks.map((track) => {
+                  const IconComponent = track.icon
+                  const isCurrentTrack = currentTrack?.id === track.id
+
+                  return (
+                    <Card
+                      key={track.id}
+                      className={`liberation-card cursor-pointer transition-all hover:scale-105 ${
+                        isCurrentTrack ? "ring-2 ring-green-500" : ""
+                      }`}
+                      onClick={() => playTrack(track)}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={`w-12 h-12 bg-gradient-to-r ${track.color} rounded-full flex items-center justify-center`}
+                          >
+                            <IconComponent className="w-6 h-6 text-white" />
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="font-semibold">{track.title}</h4>
+                            <p className="text-xs text-muted-foreground mb-2">{track.description}</p>
+                            <Badge variant="outline" className="text-xs">
+                              {formatTime(track.duration)}
+                            </Badge>
+                          </div>
+                          <Button size="sm" variant="ghost">
+                            {isCurrentTrack && isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )
+                })}
+              </div>
+            </TabsContent>
+          </Tabs>
+
+          {/* Healing Information */}
+          <Card className="liberation-card spiritual-border">
+            <CardContent className="p-6">
+              <h3 className="text-lg font-semibold mb-3 afro-futuristic-text">Sound Healing Benefits</h3>
+              <div className="grid md:grid-cols-2 gap-4 text-sm">
+                <div>
+                  <h4 className="font-semibold text-purple-700 mb-2">Healing Frequencies:</h4>
+                  <ul className="space-y-1 text-muted-foreground">
+                    <li>• 432Hz: Universal harmony and healing</li>
+                    <li>• 528Hz: Love frequency and DNA repair</li>
+                    <li>• 741Hz: Cleansing and detoxification</li>
+                    <li>• Alpha waves: Relaxation and creativity</li>
+                  </ul>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-purple-700 mb-2">Therapeutic Benefits:</h4>
+                  <ul className="space-y-1 text-muted-foreground">
+                    <li>• Reduces anxiety and stress</li>
+                    <li>• Improves sleep quality</li>
+                    <li>• Enhances meditation practice</li>
+                    <li>• Promotes emotional healing</li>
+                  </ul>
+                </div>
               </div>
             </CardContent>
           </Card>
-        ))}
-      </div>
-
-      {/* Usage Tips */}
-      <Card className="liberation-card">
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Zap className="w-5 h-5 mr-2 text-yellow-400" />
-            Sound Healing Tips
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-            <div>
-              <h4 className="font-medium text-purple-400 mb-2">For Focus & Concentration:</h4>
-              <p className="text-muted-foreground">
-                Try binaural beats (40Hz) or gentle nature sounds like forest wind. Keep volume low to avoid
-                distraction.
-              </p>
-            </div>
-            <div>
-              <h4 className="font-medium text-blue-400 mb-2">For Sleep & Relaxation:</h4>
-              <p className="text-muted-foreground">
-                Use low-frequency drones (60Hz) or rain sounds. Gradually lower volume as you drift off.
-              </p>
-            </div>
-            <div>
-              <h4 className="font-medium text-green-400 mb-2">For Anxiety Relief:</h4>
-              <p className="text-muted-foreground">
-                528Hz "love frequency" or ocean waves can help calm racing thoughts. Combine with deep breathing.
-              </p>
-            </div>
-            <div>
-              <h4 className="font-medium text-pink-400 mb-2">For Meditation:</h4>
-              <p className="text-muted-foreground">
-                432Hz meditation bells or gentle ambient tones. Layer multiple sounds for deeper immersion.
-              </p>
-            </div>
-          </div>
         </CardContent>
       </Card>
-
-      {/* Audio Visualization */}
-      {Object.keys(isPlaying).some((key) => isPlaying[key]) && (
-        <Card className="liberation-card">
-          <CardContent className="p-6 text-center">
-            <div className="flex justify-center items-center space-x-2 mb-4">
-              {[...Array(8)].map((_, i) => (
-                <div
-                  key={i}
-                  className={`w-2 bg-gradient-to-t from-cyan-400 to-purple-400 rounded-full spiritual-pulse`}
-                  style={{
-                    height: `${Math.random() * 40 + 20}px`,
-                    animationDelay: `${i * 0.1}s`,
-                  }}
-                />
-              ))}
-            </div>
-            <p className="text-sm text-muted-foreground">
-              {Object.keys(isPlaying).filter((key) => isPlaying[key]).length} sound(s) playing
-            </p>
-          </CardContent>
-        </Card>
-      )}
     </div>
   )
 }
