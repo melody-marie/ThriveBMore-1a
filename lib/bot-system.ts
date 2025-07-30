@@ -1,4 +1,5 @@
 import { supabase } from "./supabase-client"
+import { omniBotSystem } from "./omni-bot-system"
 
 export class BotSystem {
   private static instance: BotSystem
@@ -199,6 +200,11 @@ export class BotSystem {
     } catch (error) {
       console.log("Mood data will be saved when database is ready")
     }
+  }
+
+  // New method to handle direct user interactions with OmniBot
+  async handleUserMessage(message: string, userId?: string): Promise<string> {
+    return await omniBotSystem.respond(message, userId)
   }
 }
 

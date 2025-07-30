@@ -3,638 +3,660 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Badge } from "@/components/ui/badge"
+import { Dialog, DialogContent } from "@/components/ui/dialog"
 import {
   Heart,
-  Users,
   Shield,
-  Sparkles,
-  Music,
-  Brain,
-  Star,
-  Play,
-  Volume2,
-  TrendingUp,
+  Users,
+  MessageCircle,
+  BookOpen,
+  Smartphone,
+  Globe,
+  Download,
+  Zap,
+  Lock,
+  Headphones,
   Calendar,
   MapPin,
   Phone,
   Mail,
-  Globe,
+  Menu,
+  X,
 } from "lucide-react"
-import LittleSpace from "@/components/little-space"
-import MellysSpotEnhanced from "@/components/mellys-spot-enhanced"
-import AudioPlayer from "@/components/audio-player"
-import SoundEffects from "@/components/sound-effects"
-import SuggestionEngine from "@/components/suggestion-engine"
+import Link from "next/link"
+import { OmniBotChat } from "@/components/omni-bot-chat"
 
-export default function ThriveBMorePlatform() {
-  const [activeSection, setActiveSection] = useState("home")
-  const [showLittleSpace, setShowLittleSpace] = useState(false)
-  const [showMellysSpot, setShowMellysSpot] = useState(false)
-
-  const communityStats = [
-    { label: "Active Members", value: "2,847", icon: Users },
-    { label: "Safe Spaces", value: "12", icon: Shield },
-    { label: "Daily Check-ins", value: "156", icon: Heart },
-    { label: "Success Stories", value: "89", icon: Star },
-  ]
-
-  const features = [
-    {
-      title: "Melly's Spot",
-      description: "Sacred sanctuary for littles and age regression with AI companions",
-      icon: Sparkles,
-      color: "from-purple-500 to-pink-500",
-      action: () => setShowMellysSpot(true),
-    },
-    {
-      title: "Little Space",
-      description: "Personalized comfort zone with activities and soothing content",
-      icon: Heart,
-      color: "from-pink-500 to-rose-500",
-      action: () => setShowLittleSpace(true),
-    },
-    {
-      title: "Community Circles",
-      description: "Connect with others on similar journeys in safe, moderated spaces",
-      icon: Users,
-      color: "from-blue-500 to-cyan-500",
-      action: () => setActiveSection("community"),
-    },
-    {
-      title: "Wellness Hub",
-      description: "Meditation, sound healing, and mental health resources",
-      icon: Brain,
-      color: "from-green-500 to-emerald-500",
-      action: () => setActiveSection("wellness"),
-    },
-    {
-      title: "Crisis Support",
-      description: "24/7 emergency resources and immediate community response",
-      icon: Shield,
-      color: "from-red-500 to-orange-500",
-      action: () => setActiveSection("crisis"),
-    },
-    {
-      title: "Identity Celebration",
-      description: "Affirming spaces for LGBTQ+, BIPOC, and intersectional identities",
-      icon: Star,
-      color: "from-yellow-500 to-amber-500",
-      action: () => setActiveSection("identity"),
-    },
-  ]
+export default function HomePage() {
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isChatOpen, setIsChatOpen] = useState(false)
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-pink-900 to-indigo-900">
       {/* Navigation */}
-      <nav className="bg-white/80 backdrop-blur-md border-b border-purple-200 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg flex items-center justify-center">
-                <Heart className="w-5 h-5 text-white" />
+      <nav className="sticky top-0 z-50 bg-black/20 backdrop-blur-md border-b border-white/10">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full flex items-center justify-center">
+                <Heart className="w-4 h-4 text-white" />
               </div>
-              <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                ThriveBMore
-              </span>
+              <span className="text-white font-bold text-xl">ThriveBMore</span>
             </div>
 
-            <div className="hidden md:flex items-center gap-6">
-              {["home", "wellness", "community", "resources", "about"].map((section) => (
-                <button
-                  key={section}
-                  onClick={() => setActiveSection(section)}
-                  className={`capitalize transition-colors ${
-                    activeSection === section ? "text-purple-600 font-semibold" : "text-gray-600 hover:text-purple-600"
-                  }`}
-                >
-                  {section}
-                </button>
-              ))}
+            {/* Desktop Navigation */}
+            <div className="hidden md:flex items-center space-x-6">
+              <Link href="/organizing-101" className="text-white/80 hover:text-white transition-colors">
+                Organizing 101
+              </Link>
+              <Link href="/community" className="text-white/80 hover:text-white transition-colors">
+                Community
+              </Link>
+              <Link href="/resources" className="text-white/80 hover:text-white transition-colors">
+                Resources
+              </Link>
+              <Button
+                onClick={() => setIsChatOpen(true)}
+                className="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600"
+              >
+                <MessageCircle className="w-4 h-4 mr-2" />
+                Chat with OmniBot
+              </Button>
             </div>
 
-            <div className="flex items-center gap-3">
-              <Button variant="outline" size="sm" className="border-purple-200 text-purple-600 bg-transparent">
-                Sign In
-              </Button>
-              <Button size="sm" className="bg-gradient-to-r from-purple-600 to-pink-600">
-                Join Community
-              </Button>
-            </div>
+            {/* Mobile Menu Button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="md:hidden text-white"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+            >
+              {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </Button>
           </div>
+
+          {/* Mobile Navigation */}
+          {isMenuOpen && (
+            <div className="md:hidden mt-4 pb-4 border-t border-white/10 pt-4">
+              <div className="flex flex-col space-y-3">
+                <Link href="/organizing-101" className="text-white/80 hover:text-white transition-colors">
+                  Organizing 101
+                </Link>
+                <Link href="/community" className="text-white/80 hover:text-white transition-colors">
+                  Community
+                </Link>
+                <Link href="/resources" className="text-white/80 hover:text-white transition-colors">
+                  Resources
+                </Link>
+                <Button
+                  onClick={() => setIsChatOpen(true)}
+                  className="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 w-full"
+                >
+                  <MessageCircle className="w-4 h-4 mr-2" />
+                  Chat with OmniBot
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </nav>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {activeSection === "home" && (
-          <div className="space-y-12">
-            {/* Hero Section */}
-            <div className="text-center space-y-6">
-              <div className="space-y-4">
-                <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 bg-clip-text text-transparent">
-                  ThriveBMore
-                </h1>
-                <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-                  A sacred digital sanctuary where BIPOC, LGBTQ+, and marginalized communities find healing, connection,
-                  and authentic self-expression. Your journey to wholeness starts here. ✨
-                </p>
-              </div>
+      {/* Hero Section */}
+      <section className="py-20 px-4">
+        <div className="container mx-auto text-center">
+          <Badge className="mb-6 bg-white/10 text-white border-white/20 backdrop-blur-sm">
+            🏳️‍⚧️ Digital Liberation Stack
+          </Badge>
+          <h1 className="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight">
+            Welcome to the
+            <span className="bg-gradient-to-r from-pink-400 to-purple-400 bg-clip-text text-transparent block">
+              TransPower Revolution
+            </span>
+          </h1>
+          <p className="text-xl text-white/80 mb-8 max-w-3xl mx-auto leading-relaxed">
+            Sacred encrypted space for LGBTQ+ liberation. Build community, access resources, organize for change, and
+            heal together in Baltimore and beyond.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button
+              size="lg"
+              onClick={() => setIsChatOpen(true)}
+              className="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white px-8 py-4 text-lg"
+            >
+              <MessageCircle className="w-5 h-5 mr-2" />
+              Start with OmniBot
+            </Button>
+            <Link href="/organizing-101">
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-white/30 text-white hover:bg-white/10 backdrop-blur-sm px-8 py-4 text-lg bg-transparent"
+              >
+                <BookOpen className="w-5 h-5 mr-2" />
+                Learn Organizing
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
 
-              <div className="flex flex-wrap justify-center gap-3">
-                {communityStats.map((stat, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center gap-2 bg-white/60 backdrop-blur-sm rounded-full px-4 py-2 border border-purple-200"
+      {/* TransPower Stack Overview */}
+      <section className="py-16 px-4">
+        <div className="container mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">The TransPower Liberation Stack</h2>
+            <p className="text-white/80 text-lg max-w-2xl mx-auto">
+              A complete digital ecosystem designed for LGBTQ+ liberation, community building, and systemic change.
+            </p>
+          </div>
+
+          <Tabs defaultValue="os" className="w-full max-w-6xl mx-auto">
+            <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 mb-8 bg-white/10 backdrop-blur-sm">
+              <TabsTrigger value="os" className="text-white data-[state=active]:bg-white/20">
+                <Smartphone className="w-4 h-4 mr-2" />
+                LiberationOS
+              </TabsTrigger>
+              <TabsTrigger value="app" className="text-white data-[state=active]:bg-white/20">
+                <Heart className="w-4 h-4 mr-2" />
+                ThriveBMore
+              </TabsTrigger>
+              <TabsTrigger value="browser" className="text-white data-[state=active]:bg-white/20">
+                <Globe className="w-4 h-4 mr-2" />
+                SpiritSurf
+              </TabsTrigger>
+              <TabsTrigger value="hub" className="text-white data-[state=active]:bg-white/20">
+                <Download className="w-4 h-4 mr-2" />
+                The Cauldron
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="os">
+              <Card className="bg-white/10 backdrop-blur-md border-white/20 text-white">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center">
+                      <Smartphone className="w-6 h-6 text-white" />
+                    </div>
+                    LiberationOS v0.1
+                  </CardTitle>
+                  <CardDescription className="text-white/70">
+                    Trauma-informed, encrypted operating system built for liberation
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div>
+                      <h4 className="font-semibold mb-3 flex items-center gap-2">
+                        <Shield className="w-4 h-4" />
+                        Core Features
+                      </h4>
+                      <ul className="space-y-2 text-white/80">
+                        <li>• Afro-futuristic design principles</li>
+                        <li>• End-to-end encryption by default</li>
+                        <li>• Trauma-informed user interfaces</li>
+                        <li>• Lightweight for any device</li>
+                        <li>• Offline-first architecture</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold mb-3 flex items-center gap-2">
+                        <Lock className="w-4 h-4" />
+                        Security Modules
+                      </h4>
+                      <ul className="space-y-2 text-white/80">
+                        <li>• Identity Kernel protection</li>
+                        <li>• SoulVault encrypted storage</li>
+                        <li>• PeerConnector mesh networking</li>
+                        <li>• Anti-surveillance protocols</li>
+                        <li>• Community-verified updates</li>
+                      </ul>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="app">
+              <Card className="bg-white/10 backdrop-blur-md border-white/20 text-white">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-gradient-to-r from-pink-500 to-purple-500 rounded-lg flex items-center justify-center">
+                      <Heart className="w-6 h-6 text-white" />
+                    </div>
+                    ThriveBMore Platform
+                  </CardTitle>
+                  <CardDescription className="text-white/70">
+                    Complete liberation toolkit for LGBTQ+ community organizing
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div>
+                      <h4 className="font-semibold mb-3 flex items-center gap-2">
+                        <Users className="w-4 h-4" />
+                        Community Tools
+                      </h4>
+                      <ul className="space-y-2 text-white/80">
+                        <li>• Real-time resource mapping</li>
+                        <li>• Crisis assistance network</li>
+                        <li>• Story sharing vault</li>
+                        <li>• Community event calendar</li>
+                        <li>• Peer support circles</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold mb-3 flex items-center gap-2">
+                        <Zap className="w-4 h-4" />
+                        Liberation Features
+                      </h4>
+                      <ul className="space-y-2 text-white/80">
+                        <li>• OmniBot AI companion</li>
+                        <li>• Organizing education modules</li>
+                        <li>• Encrypted messaging system</li>
+                        <li>• Healing audio library</li>
+                        <li>• Emergency response protocols</li>
+                      </ul>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="browser">
+              <Card className="bg-white/10 backdrop-blur-md border-white/20 text-white">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg flex items-center justify-center">
+                      <Globe className="w-6 h-6 text-white" />
+                    </div>
+                    SpiritSurf Browser
+                  </CardTitle>
+                  <CardDescription className="text-white/70">
+                    Spiritual-tech browser for secure, community-routed navigation
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div>
+                      <h4 className="font-semibold mb-3 flex items-center gap-2">
+                        <Shield className="w-4 h-4" />
+                        Privacy Features
+                      </h4>
+                      <ul className="space-y-2 text-white/80">
+                        <li>• Built-in VPN routing</li>
+                        <li>• Anti-surveillance extensions</li>
+                        <li>• Encrypted tab memory</li>
+                        <li>• Community mesh networking</li>
+                        <li>• Anonymous browsing modes</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold mb-3 flex items-center gap-2">
+                        <Zap className="w-4 h-4" />
+                        Spiritual Tech
+                      </h4>
+                      <ul className="space-y-2 text-white/80">
+                        <li>• AI-assisted page de-biasing</li>
+                        <li>• TransNet community shortcuts</li>
+                        <li>• Healing-focused UI design</li>
+                        <li>• Direct portal access</li>
+                        <li>• Community content filtering</li>
+                      </ul>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="hub">
+              <Card className="bg-white/10 backdrop-blur-md border-white/20 text-white">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg flex items-center justify-center">
+                      <Download className="w-6 h-6 text-white" />
+                    </div>
+                    The Cauldron App Hub
+                  </CardTitle>
+                  <CardDescription className="text-white/70">
+                    Community-created app launchpad for liberation tools
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div>
+                      <h4 className="font-semibold mb-3 flex items-center gap-2">
+                        <Users className="w-4 h-4" />
+                        Community Publishing
+                      </h4>
+                      <ul className="space-y-2 text-white/80">
+                        <li>• Secure, invite-only publishing</li>
+                        <li>• Community code review</li>
+                        <li>• Peer-to-peer distribution</li>
+                        <li>• Liberation-focused curation</li>
+                        <li>• Collaborative development</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold mb-3 flex items-center gap-2">
+                        <Lock className="w-4 h-4" />
+                        Security & Trust
+                      </h4>
+                      <ul className="space-y-2 text-white/80">
+                        <li>• Cryptographic app signing</li>
+                        <li>• Community trust networks</li>
+                        <li>• Transparent source code</li>
+                        <li>• Decentralized hosting</li>
+                        <li>• Privacy-first architecture</li>
+                      </ul>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </div>
+      </section>
+
+      {/* Platform Features */}
+      <section className="py-16 px-4">
+        <div className="container mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Liberation Tools & Features</h2>
+            <p className="text-white/80 text-lg max-w-2xl mx-auto">
+              Everything you need for community organizing, healing, and building lasting change.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {/* OmniBot AI */}
+            <Card
+              className="bg-white/10 backdrop-blur-md border-white/20 text-white hover:bg-white/15 transition-all cursor-pointer"
+              onClick={() => setIsChatOpen(true)}
+            >
+              <CardHeader>
+                <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center mb-4">
+                  <MessageCircle className="w-6 h-6 text-white" />
+                </div>
+                <CardTitle>OmniBot AI Companion</CardTitle>
+                <CardDescription className="text-white/70">
+                  Trauma-informed AI for crisis support, resources, and community connection
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2 text-white/80 text-sm">
+                  <li>• 24/7 crisis intervention</li>
+                  <li>• LGBTQ+ cultural competency</li>
+                  <li>• Local resource mapping</li>
+                  <li>• Peer support matching</li>
+                </ul>
+                <Button className="w-full mt-4 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600">
+                  Chat Now
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Organizing Education */}
+            <Link href="/organizing-101">
+              <Card className="bg-white/10 backdrop-blur-md border-white/20 text-white hover:bg-white/15 transition-all cursor-pointer h-full">
+                <CardHeader>
+                  <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg flex items-center justify-center mb-4">
+                    <BookOpen className="w-6 h-6 text-white" />
+                  </div>
+                  <CardTitle>Community Organizing</CardTitle>
+                  <CardDescription className="text-white/70">
+                    Learn the difference between mobilizing and organizing for lasting change
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-2 text-white/80 text-sm">
+                    <li>• Kwame Ture's teachings</li>
+                    <li>• Historical movement analysis</li>
+                    <li>• Modern LGBTQ+ applications</li>
+                    <li>• Interactive learning modules</li>
+                  </ul>
+                  <Button className="w-full mt-4 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600">
+                    Start Learning
+                  </Button>
+                </CardContent>
+              </Card>
+            </Link>
+
+            {/* Healing Audio Library */}
+            <Card className="bg-white/10 backdrop-blur-md border-white/20 text-white hover:bg-white/15 transition-all cursor-pointer">
+              <CardHeader>
+                <div className="w-12 h-12 bg-gradient-to-r from-pink-500 to-rose-500 rounded-lg flex items-center justify-center mb-4">
+                  <Headphones className="w-6 h-6 text-white" />
+                </div>
+                <CardTitle>Melly's Healing Spot</CardTitle>
+                <CardDescription className="text-white/70">
+                  Curated audio library for meditation, affirmations, and healing
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2 text-white/80 text-sm">
+                  <li>• Trans affirmation tracks</li>
+                  <li>• Guided meditations</li>
+                  <li>• Binaural beats for focus</li>
+                  <li>• Nature sounds for calm</li>
+                </ul>
+                <Button className="w-full mt-4 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600">
+                  Listen Now
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Community Calendar */}
+            <Card className="bg-white/10 backdrop-blur-md border-white/20 text-white hover:bg-white/15 transition-all cursor-pointer">
+              <CardHeader>
+                <div className="w-12 h-12 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-lg flex items-center justify-center mb-4">
+                  <Calendar className="w-6 h-6 text-white" />
+                </div>
+                <CardTitle>Community Events</CardTitle>
+                <CardDescription className="text-white/70">
+                  Find and organize LGBTQ+ events, protests, and gatherings
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2 text-white/80 text-sm">
+                  <li>• Local Baltimore events</li>
+                  <li>• Protest coordination</li>
+                  <li>• Community meetings</li>
+                  <li>• Healing circles</li>
+                </ul>
+                <Button className="w-full mt-4 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600">
+                  View Events
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Resource Mapping */}
+            <Card className="bg-white/10 backdrop-blur-md border-white/20 text-white hover:bg-white/15 transition-all cursor-pointer">
+              <CardHeader>
+                <div className="w-12 h-12 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-lg flex items-center justify-center mb-4">
+                  <MapPin className="w-6 h-6 text-white" />
+                </div>
+                <CardTitle>Resource Network</CardTitle>
+                <CardDescription className="text-white/70">
+                  Real-time map of LGBTQ+ friendly resources and services
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2 text-white/80 text-sm">
+                  <li>• Healthcare providers</li>
+                  <li>• Legal assistance</li>
+                  <li>• Housing support</li>
+                  <li>• Emergency services</li>
+                </ul>
+                <Button className="w-full mt-4 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600">
+                  Find Resources
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Emergency Support */}
+            <Card className="bg-white/10 backdrop-blur-md border-white/20 text-white hover:bg-white/15 transition-all cursor-pointer">
+              <CardHeader>
+                <div className="w-12 h-12 bg-gradient-to-r from-red-500 to-pink-500 rounded-lg flex items-center justify-center mb-4">
+                  <Phone className="w-6 h-6 text-white" />
+                </div>
+                <CardTitle>Crisis Support</CardTitle>
+                <CardDescription className="text-white/70">
+                  24/7 emergency assistance and crisis intervention resources
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2 text-white/80 text-sm">
+                  <li>• Immediate crisis hotlines</li>
+                  <li>• Emergency housing</li>
+                  <li>• Safety planning</li>
+                  <li>• Peer crisis support</li>
+                </ul>
+                <Button className="w-full mt-4 bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600">
+                  Get Help Now
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* Call to Action */}
+      <section className="py-20 px-4">
+        <div className="container mx-auto text-center">
+          <Card className="bg-white/10 backdrop-blur-md border-white/20 text-white max-w-4xl mx-auto">
+            <CardContent className="p-12">
+              <h2 className="text-3xl md:text-4xl font-bold mb-6">Ready to Join the Liberation?</h2>
+              <p className="text-xl text-white/80 mb-8 max-w-2xl mx-auto">
+                Connect with Baltimore's LGBTQ+ community. Organize for change. Build the world we deserve to live in.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button
+                  size="lg"
+                  onClick={() => setIsChatOpen(true)}
+                  className="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white px-8 py-4 text-lg"
+                >
+                  <MessageCircle className="w-5 h-5 mr-2" />
+                  Start Your Journey
+                </Button>
+                <Link href="/community">
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="border-white/30 text-white hover:bg-white/10 backdrop-blur-sm px-8 py-4 text-lg bg-transparent"
                   >
-                    <stat.icon className="w-4 h-4 text-purple-600" />
-                    <span className="font-semibold text-purple-800">{stat.value}</span>
-                    <span className="text-sm text-gray-600">{stat.label}</span>
-                  </div>
-                ))}
+                    <Users className="w-5 h-5 mr-2" />
+                    Join Community
+                  </Button>
+                </Link>
               </div>
-            </div>
-
-            {/* Suggestion Engine */}
-            <SuggestionEngine currentSection="home" />
-
-            {/* Feature Cards */}
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {features.map((feature, index) => (
-                <Card
-                  key={index}
-                  className="group hover:shadow-xl transition-all duration-300 cursor-pointer border-0 bg-white/60 backdrop-blur-sm hover:bg-white/80"
-                  onClick={feature.action}
-                >
-                  <CardHeader className="pb-3">
-                    <div
-                      className={`w-12 h-12 rounded-xl bg-gradient-to-r ${feature.color} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}
-                    >
-                      <feature.icon className="w-6 h-6 text-white" />
-                    </div>
-                    <CardTitle className="text-lg">{feature.title}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <CardDescription className="text-gray-600 leading-relaxed">{feature.description}</CardDescription>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-
-            {/* Community Values */}
-            <div className="bg-white/60 backdrop-blur-sm rounded-3xl p-8 border border-purple-200">
-              <h2 className="text-3xl font-bold text-center mb-8 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                Our Sacred Values
-              </h2>
-              <div className="grid md:grid-cols-3 gap-6">
-                <div className="text-center space-y-3">
-                  <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto">
-                    <Heart className="w-8 h-8 text-white" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-gray-800">Radical Love</h3>
-                  <p className="text-gray-600">
-                    Unconditional acceptance and celebration of all identities and expressions
-                  </p>
-                </div>
-                <div className="text-center space-y-3">
-                  <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex items-center justify-center mx-auto">
-                    <Shield className="w-8 h-8 text-white" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-gray-800">Sacred Safety</h3>
-                  <p className="text-gray-600">
-                    Protected spaces where vulnerability is honored and trauma is held with care
-                  </p>
-                </div>
-                <div className="text-center space-y-3">
-                  <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center mx-auto">
-                    <Sparkles className="w-8 h-8 text-white" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-gray-800">Collective Healing</h3>
-                  <p className="text-gray-600">
-                    Community-centered wellness that honors ancestral wisdom and modern therapy
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeSection === "wellness" && (
-          <div className="space-y-8">
-            <div className="text-center space-y-4">
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
-                Wellness Sanctuary
-              </h1>
-              <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-                Holistic healing tools combining ancient wisdom with modern wellness practices
-              </p>
-            </div>
-
-            <SuggestionEngine currentSection="wellness" />
-
-            <Tabs defaultValue="meditation" className="w-full">
-              <TabsList className="grid w-full grid-cols-4 bg-white/60 backdrop-blur-sm">
-                <TabsTrigger value="meditation" className="flex items-center gap-2">
-                  <Brain className="w-4 h-4" />
-                  Meditation
-                </TabsTrigger>
-                <TabsTrigger value="sound" className="flex items-center gap-2">
-                  <Volume2 className="w-4 h-4" />
-                  Sound Healing
-                </TabsTrigger>
-                <TabsTrigger value="music" className="flex items-center gap-2">
-                  <Music className="w-4 h-4" />
-                  Music Player
-                </TabsTrigger>
-                <TabsTrigger value="mood" className="flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4" />
-                  Mood Tracking
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="meditation" className="mt-6">
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {[
-                    {
-                      title: "Morning Affirmations",
-                      duration: "10 min",
-                      type: "Guided",
-                      color: "from-yellow-400 to-orange-500",
-                    },
-                    {
-                      title: "Anxiety Relief",
-                      duration: "15 min",
-                      type: "Breathing",
-                      color: "from-blue-400 to-purple-500",
-                    },
-                    {
-                      title: "Identity Celebration",
-                      duration: "20 min",
-                      type: "Visualization",
-                      color: "from-pink-400 to-red-500",
-                    },
-                    {
-                      title: "Trauma Healing",
-                      duration: "25 min",
-                      type: "Body Scan",
-                      color: "from-green-400 to-teal-500",
-                    },
-                    {
-                      title: "Sleep Stories",
-                      duration: "30 min",
-                      type: "Narrative",
-                      color: "from-indigo-400 to-purple-500",
-                    },
-                    {
-                      title: "Ancestral Connection",
-                      duration: "18 min",
-                      type: "Spiritual",
-                      color: "from-purple-400 to-pink-500",
-                    },
-                  ].map((meditation, index) => (
-                    <Card
-                      key={index}
-                      className="group hover:shadow-lg transition-all cursor-pointer bg-white/60 backdrop-blur-sm"
-                    >
-                      <CardContent className="p-6">
-                        <div
-                          className={`w-full h-32 bg-gradient-to-r ${meditation.color} rounded-lg mb-4 flex items-center justify-center group-hover:scale-105 transition-transform`}
-                        >
-                          <Play className="w-8 h-8 text-white" />
-                        </div>
-                        <h3 className="font-semibold text-lg mb-2">{meditation.title}</h3>
-                        <div className="flex justify-between items-center text-sm text-gray-600">
-                          <span>{meditation.duration}</span>
-                          <Badge variant="secondary">{meditation.type}</Badge>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </TabsContent>
-
-              <TabsContent value="sound" className="mt-6">
-                <SoundEffects />
-              </TabsContent>
-
-              <TabsContent value="music" className="mt-6">
-                <AudioPlayer />
-              </TabsContent>
-
-              <TabsContent value="mood" className="mt-6">
-                <div className="grid md:grid-cols-2 gap-6">
-                  <Card className="bg-white/60 backdrop-blur-sm">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <TrendingUp className="w-5 h-5 text-green-600" />
-                        Mood Trends
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        <div className="flex justify-between items-center">
-                          <span>This Week</span>
-                          <Badge className="bg-green-100 text-green-800">Improving</Badge>
-                        </div>
-                        <div className="h-32 bg-gradient-to-r from-green-100 to-blue-100 rounded-lg flex items-center justify-center">
-                          <span className="text-gray-600">Mood chart visualization</span>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="bg-white/60 backdrop-blur-sm">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <Heart className="w-5 h-5 text-pink-600" />
-                        Daily Check-in
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        <p className="text-gray-600">How are you feeling today?</p>
-                        <div className="grid grid-cols-3 gap-2">
-                          {["😊", "😐", "😔", "😰", "😴", "🤗"].map((emoji, index) => (
-                            <button
-                              key={index}
-                              className="p-3 text-2xl hover:bg-purple-100 rounded-lg transition-colors"
-                            >
-                              {emoji}
-                            </button>
-                          ))}
-                        </div>
-                        <Button className="w-full bg-gradient-to-r from-purple-600 to-pink-600">Log Mood</Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              </TabsContent>
-            </Tabs>
-          </div>
-        )}
-
-        {activeSection === "community" && (
-          <div className="space-y-8">
-            <div className="text-center space-y-4">
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                Community Spaces
-              </h1>
-              <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-                Connect with others who understand your journey in safe, affirming spaces
-              </p>
-            </div>
-
-            <SuggestionEngine currentSection="community" />
-
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[
-                {
-                  name: "Melly's Spot",
-                  description: "Sacred sanctuary for littles and age regression",
-                  members: 234,
-                  color: "from-purple-500 to-pink-500",
-                  action: () => setShowMellysSpot(true),
-                },
-                {
-                  name: "Trans Joy Circle",
-                  description: "Celebrating transgender experiences and identity",
-                  members: 189,
-                  color: "from-blue-400 to-pink-400",
-                  action: () => {},
-                },
-                {
-                  name: "BIPOC Healing Space",
-                  description: "Culturally affirming support for people of color",
-                  members: 312,
-                  color: "from-yellow-500 to-red-500",
-                  action: () => {},
-                },
-                {
-                  name: "Neurodivergent Haven",
-                  description: "Understanding and celebrating different minds",
-                  members: 156,
-                  color: "from-green-500 to-blue-500",
-                  action: () => {},
-                },
-                {
-                  name: "Survivor Support",
-                  description: "Trauma-informed healing and recovery",
-                  members: 98,
-                  color: "from-purple-500 to-indigo-500",
-                  action: () => {},
-                },
-                {
-                  name: "Creative Expression",
-                  description: "Art, music, and creative healing",
-                  members: 267,
-                  color: "from-pink-500 to-orange-500",
-                  action: () => {},
-                },
-              ].map((space, index) => (
-                <Card
-                  key={index}
-                  className="group hover:shadow-xl transition-all cursor-pointer bg-white/60 backdrop-blur-sm"
-                  onClick={space.action}
-                >
-                  <CardContent className="p-6">
-                    <div
-                      className={`w-full h-24 bg-gradient-to-r ${space.color} rounded-lg mb-4 flex items-center justify-center group-hover:scale-105 transition-transform`}
-                    >
-                      <Users className="w-8 h-8 text-white" />
-                    </div>
-                    <h3 className="font-semibold text-lg mb-2">{space.name}</h3>
-                    <p className="text-gray-600 text-sm mb-3">{space.description}</p>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-500">{space.members} members</span>
-                      <Button size="sm" variant="outline" className="border-purple-200 text-purple-600 bg-transparent">
-                        Join
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {activeSection === "resources" && (
-          <div className="space-y-8">
-            <div className="text-center space-y-4">
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent">
-                Crisis & Resources
-              </h1>
-              <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-                Immediate support and comprehensive resources for your wellbeing
-              </p>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-8">
-              <Card className="bg-red-50 border-red-200">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-red-700">
-                    <Phone className="w-5 h-5" />
-                    Crisis Hotlines
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center p-3 bg-white rounded-lg">
-                      <span className="font-medium">National Suicide Prevention</span>
-                      <span className="text-red-600 font-bold">988</span>
-                    </div>
-                    <div className="flex justify-between items-center p-3 bg-white rounded-lg">
-                      <span className="font-medium">Crisis Text Line</span>
-                      <span className="text-red-600 font-bold">Text HOME to 741741</span>
-                    </div>
-                    <div className="flex justify-between items-center p-3 bg-white rounded-lg">
-                      <span className="font-medium">Trans Lifeline</span>
-                      <span className="text-red-600 font-bold">877-565-8860</span>
-                    </div>
-                    <div className="flex justify-between items-center p-3 bg-white rounded-lg">
-                      <span className="font-medium">LGBT National Hotline</span>
-                      <span className="text-red-600 font-bold">1-888-843-4564</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-blue-50 border-blue-200">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-blue-700">
-                    <Globe className="w-5 h-5" />
-                    Online Resources
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-3">
-                    {[
-                      "PFLAG - Family Support",
-                      "The Trevor Project - LGBTQ Youth",
-                      "NAMI - Mental Health Education",
-                      "RAINN - Sexual Assault Support",
-                      "SAMHSA - Substance Abuse Help",
-                      "Crisis Text Line - 24/7 Support",
-                    ].map((resource, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 bg-white rounded-lg">
-                        <span className="font-medium">{resource}</span>
-                        <Button size="sm" variant="outline" className="border-blue-200 text-blue-600 bg-transparent">
-                          Visit
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        )}
-
-        {activeSection === "about" && (
-          <div className="space-y-8">
-            <div className="text-center space-y-4">
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                About ThriveBMore
-              </h1>
-              <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-                Our mission, values, and commitment to community healing
-              </p>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-8">
-              <Card className="bg-white/60 backdrop-blur-sm">
-                <CardHeader>
-                  <CardTitle className="text-2xl text-purple-700">Our Story</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4 text-gray-700 leading-relaxed">
-                  <p>
-                    ThriveBMore was born from the recognition that marginalized communities need spaces designed
-                    specifically for their unique healing journeys. We understand that trauma, identity, and wellness
-                    intersect in complex ways.
-                  </p>
-                  <p>
-                    Our platform combines cutting-edge technology with ancient wisdom, creating a sanctuary where BIPOC,
-                    LGBTQ+, neurodivergent, and other marginalized individuals can find authentic community and
-                    comprehensive support.
-                  </p>
-                  <p>
-                    Every feature is designed with trauma-informed care, cultural competency, and radical inclusivity at
-                    its core. This isn't just another wellness app—it's a movement toward collective liberation and
-                    healing.
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-white/60 backdrop-blur-sm">
-                <CardHeader>
-                  <CardTitle className="text-2xl text-pink-700">Contact & Support</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-3">
-                      <Mail className="w-5 h-5 text-purple-600" />
-                      <span>support@thrivebmore.org</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <Phone className="w-5 h-5 text-purple-600" />
-                      <span>1-800-THRIVE-1</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <MapPin className="w-5 h-5 text-purple-600" />
-                      <span>Baltimore, MD & Virtual Worldwide</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <Calendar className="w-5 h-5 text-purple-600" />
-                      <span>24/7 Community Support</span>
-                    </div>
-                  </div>
-
-                  <div className="pt-4 border-t border-gray-200">
-                    <h4 className="font-semibold mb-3">Community Guidelines</h4>
-                    <ul className="space-y-2 text-sm text-gray-600">
-                      <li>• Respect all identities and expressions</li>
-                      <li>• Practice consent in all interactions</li>
-                      <li>• Honor confidentiality and privacy</li>
-                      <li>• Support without judgment</li>
-                      <li>• Celebrate diversity and intersectionality</li>
-                    </ul>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        )}
-      </main>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
 
       {/* Footer */}
-      <footer className="bg-white/80 backdrop-blur-md border-t border-purple-200 mt-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="text-center space-y-4">
-            <div className="flex items-center justify-center gap-2">
-              <div className="w-6 h-6 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg flex items-center justify-center">
-                <Heart className="w-4 h-4 text-white" />
+      <footer className="py-12 px-4 border-t border-white/10">
+        <div className="container mx-auto">
+          <div className="grid md:grid-cols-4 gap-8">
+            <div>
+              <div className="flex items-center space-x-2 mb-4">
+                <div className="w-8 h-8 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full flex items-center justify-center">
+                  <Heart className="w-4 h-4 text-white" />
+                </div>
+                <span className="text-white font-bold text-xl">ThriveBMore</span>
               </div>
-              <span className="text-lg font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                ThriveBMore
-              </span>
+              <p className="text-white/70 text-sm">
+                Digital liberation platform for LGBTQ+ community organizing and healing.
+              </p>
             </div>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              A sacred digital sanctuary for marginalized communities to heal, connect, and thrive together. Built with
-              love, powered by community. 💖✨🏳️‍⚧️
+
+            <div>
+              <h4 className="text-white font-semibold mb-4">Platform</h4>
+              <ul className="space-y-2 text-white/70 text-sm">
+                <li>
+                  <Link href="/organizing-101" className="hover:text-white transition-colors">
+                    Organizing 101
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/community" className="hover:text-white transition-colors">
+                    Community
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/resources" className="hover:text-white transition-colors">
+                    Resources
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/events" className="hover:text-white transition-colors">
+                    Events
+                  </Link>
+                </li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="text-white font-semibold mb-4">Support</h4>
+              <ul className="space-y-2 text-white/70 text-sm">
+                <li>
+                  <Link href="/crisis" className="hover:text-white transition-colors">
+                    Crisis Support
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/help" className="hover:text-white transition-colors">
+                    Help Center
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/privacy" className="hover:text-white transition-colors">
+                    Privacy
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/security" className="hover:text-white transition-colors">
+                    Security
+                  </Link>
+                </li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="text-white font-semibold mb-4">Connect</h4>
+              <ul className="space-y-2 text-white/70 text-sm">
+                <li className="flex items-center gap-2">
+                  <Mail className="w-4 h-4" />
+                  hello@thrivebmore.org
+                </li>
+                <li className="flex items-center gap-2">
+                  <Phone className="w-4 h-4" />
+                  Crisis: 988
+                </li>
+                <li className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4" />
+                  Baltimore, MD
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="border-t border-white/10 mt-8 pt-8 text-center">
+            <p className="text-white/70 text-sm">
+              © 2024 ThriveBMore. Built with love for liberation.
+              <span className="text-pink-400">🏳️‍⚧️</span>
             </p>
-            <div className="flex justify-center gap-6 text-sm text-gray-500">
-              <span>Privacy Policy</span>
-              <span>Community Guidelines</span>
-              <span>Crisis Resources</span>
-              <span>Contact</span>
-            </div>
           </div>
         </div>
       </footer>
 
-      {/* Modals */}
-      <LittleSpace isVisible={showLittleSpace} onClose={() => setShowLittleSpace(false)} />
-      <MellysSpotEnhanced isVisible={showMellysSpot} onClose={() => setShowMellysSpot(false)} />
+      {/* OmniBot Chat Modal */}
+      <Dialog open={isChatOpen} onOpenChange={setIsChatOpen}>
+        <DialogContent className="max-w-4xl h-[80vh] p-0 bg-gradient-to-br from-purple-900 to-pink-900 border-purple-500/30">
+          <OmniBotChat onClose={() => setIsChatOpen(false)} />
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Slider } from "@/components/ui/slider"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   Play,
   Pause,
@@ -13,131 +13,147 @@ import {
   SkipForward,
   Volume2,
   VolumeX,
+  Heart,
+  Share,
+  Download,
   Shuffle,
   Repeat,
   Music,
-  Heart,
+  Headphones,
+  Waves,
   Brain,
-  Sparkles,
 } from "lucide-react"
 
-interface Track {
+interface AudioTrack {
   id: string
   title: string
   artist: string
-  duration: string
-  category: "meditation" | "healing" | "identity" | "music"
+  duration: number
+  category: "meditation" | "affirmations" | "nature" | "binaural"
   description: string
-  benefits: string[]
   audioUrl: string
+  imageUrl: string
+  tags: string[]
+  likes: number
+  isLiked: boolean
 }
 
-const tracks: Track[] = [
+const sampleTracks: AudioTrack[] = [
   {
     id: "1",
-    title: "Morning Affirmations for Trans Joy",
-    artist: "ThriveBMore Collective",
-    duration: "12:34",
-    category: "identity",
-    description: "Powerful affirmations celebrating transgender identity and self-love",
-    benefits: ["Self-acceptance", "Confidence building", "Identity affirmation"],
-    audioUrl: "/audio/morning-affirmations.mp3",
+    title: "Trans Affirmation Meditation",
+    artist: "Melly's Healing Circle",
+    duration: 900, // 15 minutes
+    category: "meditation",
+    description: "A gentle guided meditation affirming your identity and worth",
+    audioUrl: "/audio/trans-affirmation.mp3",
+    imageUrl: "/placeholder.svg?height=300&width=300&text=Trans+Pride",
+    tags: ["identity", "affirmation", "transgender", "self-love"],
+    likes: 234,
+    isLiked: false,
   },
   {
     id: "2",
-    title: "BIPOC Healing Meditation",
-    artist: "Ancestral Voices",
-    duration: "18:45",
-    category: "healing",
-    description: "Trauma-informed meditation honoring ancestral strength and resilience",
-    benefits: ["Trauma healing", "Cultural connection", "Emotional regulation"],
-    audioUrl: "/audio/bipoc-healing.mp3",
+    title: "I Am Enough - Daily Affirmations",
+    artist: "Liberation Voices",
+    duration: 600, // 10 minutes
+    category: "affirmations",
+    description: "Powerful daily affirmations for LGBTQ+ self-worth and confidence",
+    audioUrl: "/audio/daily-affirmations.mp3",
+    imageUrl: "/placeholder.svg?height=300&width=300&text=Rainbow+Heart",
+    tags: ["daily", "confidence", "self-worth", "morning"],
+    likes: 189,
+    isLiked: true,
   },
   {
     id: "3",
-    title: "Anxiety Relief Breathing",
-    artist: "Calm Collective",
-    duration: "8:22",
-    category: "meditation",
-    description: "Guided breathing exercises for anxiety and panic management",
-    benefits: ["Anxiety reduction", "Stress relief", "Grounding techniques"],
-    audioUrl: "/audio/anxiety-relief.mp3",
+    title: "Ocean Waves for Healing",
+    artist: "Nature's Sanctuary",
+    duration: 1800, // 30 minutes
+    category: "nature",
+    description: "Calming ocean sounds to wash away stress and trauma",
+    audioUrl: "/audio/ocean-waves.mp3",
+    imageUrl: "/placeholder.svg?height=300&width=300&text=Ocean+Waves",
+    tags: ["ocean", "calming", "sleep", "stress-relief"],
+    likes: 156,
+    isLiked: false,
   },
   {
     id: "4",
-    title: "Queer Liberation Anthem",
-    artist: "Pride Voices",
-    duration: "4:17",
-    category: "music",
-    description: "Uplifting anthem celebrating LGBTQ+ pride and liberation",
-    benefits: ["Empowerment", "Community connection", "Joy cultivation"],
-    audioUrl: "/audio/liberation-anthem.mp3",
+    title: "40Hz Focus Frequency",
+    artist: "Binaural Beats Collective",
+    duration: 1200, // 20 minutes
+    category: "binaural",
+    description: "Gamma waves to enhance focus and cognitive function",
+    audioUrl: "/audio/40hz-focus.mp3",
+    imageUrl: "/placeholder.svg?height=300&width=300&text=Brain+Waves",
+    tags: ["focus", "gamma", "concentration", "study"],
+    likes: 98,
+    isLiked: false,
   },
   {
     id: "5",
-    title: "Little Space Lullaby",
-    artist: "Gentle Hearts",
-    duration: "15:30",
-    category: "healing",
-    description: "Soothing sounds for age regression and inner child healing",
-    benefits: ["Inner child work", "Comfort", "Safe space creation"],
-    audioUrl: "/audio/little-space-lullaby.mp3",
+    title: "Ancestral Strength Meditation",
+    artist: "Black Liberation Healing",
+    duration: 1080, // 18 minutes
+    category: "meditation",
+    description: "Connect with the strength and wisdom of your ancestors",
+    audioUrl: "/audio/ancestral-strength.mp3",
+    imageUrl: "/placeholder.svg?height=300&width=300&text=Ancestral+Wisdom",
+    tags: ["ancestors", "strength", "black", "heritage"],
+    likes: 267,
+    isLiked: true,
   },
   {
     id: "6",
-    title: "Neurodivergent Focus Flow",
-    artist: "Mind Harmony",
-    duration: "25:00",
-    category: "meditation",
-    description: "Specially designed meditation for ADHD and neurodivergent minds",
-    benefits: ["Focus enhancement", "Sensory regulation", "Mind clarity"],
-    audioUrl: "/audio/neurodivergent-focus.mp3",
+    title: "Forest Rain Sanctuary",
+    artist: "Earth Sounds",
+    duration: 2400, // 40 minutes
+    category: "nature",
+    description: "Gentle rain in an ancient forest for deep relaxation",
+    audioUrl: "/audio/forest-rain.mp3",
+    imageUrl: "/placeholder.svg?height=300&width=300&text=Forest+Rain",
+    tags: ["rain", "forest", "relaxation", "nature"],
+    likes: 143,
+    isLiked: false,
   },
 ]
 
-export default function AudioPlayer() {
-  const [currentTrack, setCurrentTrack] = useState<Track>(tracks[0])
+export function AudioPlayer() {
+  const [currentTrack, setCurrentTrack] = useState<AudioTrack>(sampleTracks[0])
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
-  const [duration, setDuration] = useState(0)
-  const [volume, setVolume] = useState([70])
+  const [volume, setVolume] = useState(70)
   const [isMuted, setIsMuted] = useState(false)
   const [isShuffled, setIsShuffled] = useState(false)
-  const [repeatMode, setRepeatMode] = useState<"off" | "one" | "all">("off")
-  const [selectedCategory, setSelectedCategory] = useState<string>("all")
+  const [repeatMode, setRepeatMode] = useState<"none" | "one" | "all">("none")
+  const [tracks, setTracks] = useState(sampleTracks)
+  const [activeCategory, setActiveCategory] = useState<string>("all")
 
   const audioRef = useRef<HTMLAudioElement>(null)
-
-  const filteredTracks =
-    selectedCategory === "all" ? tracks : tracks.filter((track) => track.category === selectedCategory)
 
   useEffect(() => {
     const audio = audioRef.current
     if (!audio) return
 
     const updateTime = () => setCurrentTime(audio.currentTime)
-    const updateDuration = () => setDuration(audio.duration)
+    const handleEnded = () => {
+      if (repeatMode === "one") {
+        audio.currentTime = 0
+        audio.play()
+      } else {
+        handleNext()
+      }
+    }
 
     audio.addEventListener("timeupdate", updateTime)
-    audio.addEventListener("loadedmetadata", updateDuration)
-    audio.addEventListener("ended", handleTrackEnd)
+    audio.addEventListener("ended", handleEnded)
 
     return () => {
       audio.removeEventListener("timeupdate", updateTime)
-      audio.removeEventListener("loadedmetadata", updateDuration)
-      audio.removeEventListener("ended", handleTrackEnd)
+      audio.removeEventListener("ended", handleEnded)
     }
-  }, [currentTrack])
-
-  const handleTrackEnd = () => {
-    if (repeatMode === "one") {
-      audioRef.current?.play()
-    } else if (repeatMode === "all" || isShuffled) {
-      playNext()
-    } else {
-      setIsPlaying(false)
-    }
-  }
+  }, [repeatMode])
 
   const togglePlay = () => {
     const audio = audioRef.current
@@ -151,32 +167,39 @@ export default function AudioPlayer() {
     setIsPlaying(!isPlaying)
   }
 
-  const playNext = () => {
-    const currentIndex = filteredTracks.findIndex((track) => track.id === currentTrack.id)
-    let nextIndex
+  const handleNext = () => {
+    const currentIndex = tracks.findIndex((track) => track.id === currentTrack.id)
+    let nextIndex = currentIndex + 1
 
-    if (isShuffled) {
-      nextIndex = Math.floor(Math.random() * filteredTracks.length)
-    } else {
-      nextIndex = (currentIndex + 1) % filteredTracks.length
+    if (nextIndex >= tracks.length) {
+      nextIndex = repeatMode === "all" ? 0 : currentIndex
     }
 
-    setCurrentTrack(filteredTracks[nextIndex])
-    setIsPlaying(true)
+    if (isShuffled) {
+      nextIndex = Math.floor(Math.random() * tracks.length)
+    }
+
+    setCurrentTrack(tracks[nextIndex])
+    setCurrentTime(0)
   }
 
-  const playPrevious = () => {
-    const currentIndex = filteredTracks.findIndex((track) => track.id === currentTrack.id)
-    const prevIndex = currentIndex === 0 ? filteredTracks.length - 1 : currentIndex - 1
-    setCurrentTrack(filteredTracks[prevIndex])
-    setIsPlaying(true)
+  const handlePrevious = () => {
+    const currentIndex = tracks.findIndex((track) => track.id === currentTrack.id)
+    let prevIndex = currentIndex - 1
+
+    if (prevIndex < 0) {
+      prevIndex = tracks.length - 1
+    }
+
+    setCurrentTrack(tracks[prevIndex])
+    setCurrentTime(0)
   }
 
   const handleSeek = (value: number[]) => {
     const audio = audioRef.current
     if (!audio) return
 
-    const newTime = (value[0] / 100) * duration
+    const newTime = (value[0] / 100) * currentTrack.duration
     audio.currentTime = newTime
     setCurrentTime(newTime)
   }
@@ -185,9 +208,10 @@ export default function AudioPlayer() {
     const audio = audioRef.current
     if (!audio) return
 
-    setVolume(value)
-    audio.volume = value[0] / 100
-    setIsMuted(value[0] === 0)
+    const newVolume = value[0]
+    setVolume(newVolume)
+    audio.volume = newVolume / 100
+    setIsMuted(newVolume === 0)
   }
 
   const toggleMute = () => {
@@ -195,7 +219,7 @@ export default function AudioPlayer() {
     if (!audio) return
 
     if (isMuted) {
-      audio.volume = volume[0] / 100
+      audio.volume = volume / 100
       setIsMuted(false)
     } else {
       audio.volume = 0
@@ -203,202 +227,252 @@ export default function AudioPlayer() {
     }
   }
 
-  const formatTime = (time: number) => {
-    const minutes = Math.floor(time / 60)
-    const seconds = Math.floor(time % 60)
-    return `${minutes}:${seconds.toString().padStart(2, "0")}`
+  const toggleLike = (trackId: string) => {
+    setTracks((prev) =>
+      prev.map((track) =>
+        track.id === trackId
+          ? { ...track, isLiked: !track.isLiked, likes: track.isLiked ? track.likes - 1 : track.likes + 1 }
+          : track,
+      ),
+    )
+  }
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60)
+    const secs = Math.floor(seconds % 60)
+    return `${mins}:${secs.toString().padStart(2, "0")}`
   }
 
   const getCategoryIcon = (category: string) => {
     switch (category) {
       case "meditation":
-        return <Brain className="w-4 h-4" />
-      case "healing":
+        return <Headphones className="w-4 h-4" />
+      case "affirmations":
         return <Heart className="w-4 h-4" />
-      case "identity":
-        return <Sparkles className="w-4 h-4" />
-      case "music":
-        return <Music className="w-4 h-4" />
+      case "nature":
+        return <Waves className="w-4 h-4" />
+      case "binaural":
+        return <Brain className="w-4 h-4" />
       default:
         return <Music className="w-4 h-4" />
     }
   }
 
-  const getCategoryColor = (category: string) => {
-    switch (category) {
-      case "meditation":
-        return "from-blue-500 to-purple-500"
-      case "healing":
-        return "from-green-500 to-teal-500"
-      case "identity":
-        return "from-pink-500 to-purple-500"
-      case "music":
-        return "from-orange-500 to-red-500"
-      default:
-        return "from-gray-500 to-gray-600"
-    }
-  }
+  const filteredTracks = activeCategory === "all" ? tracks : tracks.filter((track) => track.category === activeCategory)
 
   return (
-    <div className="space-y-6">
-      <audio ref={audioRef} src={currentTrack.audioUrl} />
+    <div className="w-full max-w-6xl mx-auto space-y-6">
+      {/* Hidden Audio Element */}
+      <audio
+        ref={audioRef}
+        src={currentTrack.audioUrl}
+        onLoadedData={() => {
+          if (audioRef.current) {
+            audioRef.current.volume = volume / 100
+          }
+        }}
+      />
 
-      {/* Category Filter */}
-      <div className="flex items-center gap-4">
-        <span className="text-sm font-medium text-gray-700">Filter by category:</span>
-        <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-          <SelectTrigger className="w-48">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Categories</SelectItem>
-            <SelectItem value="meditation">Meditation</SelectItem>
-            <SelectItem value="healing">Healing</SelectItem>
-            <SelectItem value="identity">Identity</SelectItem>
-            <SelectItem value="music">Music</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Now Playing Card */}
-      <Card className="bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200">
-        <CardContent className="p-6">
-          <div className="flex items-center gap-6">
+      {/* Main Player */}
+      <Card className="bg-gradient-to-br from-purple-900/90 to-pink-900/90 backdrop-blur-sm border-white/20 text-white">
+        <CardContent className="p-8">
+          <div className="grid md:grid-cols-3 gap-8 items-center">
             {/* Album Art */}
-            <div
-              className={`w-24 h-24 bg-gradient-to-r ${getCategoryColor(currentTrack.category)} rounded-lg flex items-center justify-center flex-shrink-0`}
-            >
-              {getCategoryIcon(currentTrack.category)}
+            <div className="flex justify-center">
+              <div className="relative">
+                <img
+                  src={currentTrack.imageUrl || "/placeholder.svg"}
+                  alt={currentTrack.title}
+                  className="w-48 h-48 rounded-2xl shadow-2xl"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent rounded-2xl" />
+              </div>
             </div>
 
-            {/* Track Info */}
-            <div className="flex-1 min-w-0">
-              <h3 className="text-lg font-semibold text-gray-900 truncate">{currentTrack.title}</h3>
-              <p className="text-gray-600 truncate">{currentTrack.artist}</p>
-              <Badge variant="secondary" className="mt-1 capitalize">
-                {currentTrack.category}
-              </Badge>
-            </div>
-
-            {/* Controls */}
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsShuffled(!isShuffled)}
-                className={isShuffled ? "text-purple-600" : "text-gray-600"}
-              >
-                <Shuffle className="w-4 h-4" />
-              </Button>
-
-              <Button variant="ghost" size="sm" onClick={playPrevious}>
-                <SkipBack className="w-4 h-4" />
-              </Button>
-
-              <Button
-                onClick={togglePlay}
-                className="w-12 h-12 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
-              >
-                {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
-              </Button>
-
-              <Button variant="ghost" size="sm" onClick={playNext}>
-                <SkipForward className="w-4 h-4" />
-              </Button>
-
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setRepeatMode(repeatMode === "off" ? "all" : repeatMode === "all" ? "one" : "off")}
-                className={repeatMode !== "off" ? "text-purple-600" : "text-gray-600"}
-              >
-                <Repeat className="w-4 h-4" />
-                {repeatMode === "one" && <span className="text-xs ml-1">1</span>}
-              </Button>
-            </div>
-          </div>
-
-          {/* Progress Bar */}
-          <div className="mt-4 space-y-2">
-            <Slider
-              value={[duration ? (currentTime / duration) * 100 : 0]}
-              onValueChange={handleSeek}
-              className="w-full"
-            />
-            <div className="flex justify-between text-xs text-gray-500">
-              <span>{formatTime(currentTime)}</span>
-              <span>{formatTime(duration)}</span>
-            </div>
-          </div>
-
-          {/* Volume Control */}
-          <div className="mt-4 flex items-center gap-3">
-            <Button variant="ghost" size="sm" onClick={toggleMute}>
-              {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-            </Button>
-            <Slider value={isMuted ? [0] : volume} onValueChange={handleVolumeChange} max={100} className="w-24" />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Track Description */}
-      <Card className="bg-white/60 backdrop-blur-sm">
-        <CardHeader>
-          <CardTitle className="text-lg">About This Track</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-gray-700">{currentTrack.description}</p>
-          <div>
-            <h4 className="font-medium text-gray-900 mb-2">Benefits:</h4>
-            <div className="flex flex-wrap gap-2">
-              {currentTrack.benefits.map((benefit, index) => (
-                <Badge key={index} variant="outline" className="text-xs">
-                  {benefit}
-                </Badge>
-              ))}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Playlist */}
-      <Card className="bg-white/60 backdrop-blur-sm">
-        <CardHeader>
-          <CardTitle className="text-lg">Playlist ({filteredTracks.length} tracks)</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            {filteredTracks.map((track) => (
-              <div
-                key={track.id}
-                onClick={() => {
-                  setCurrentTrack(track)
-                  setIsPlaying(true)
-                }}
-                className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
-                  track.id === currentTrack.id ? "bg-purple-100 border border-purple-200" : "hover:bg-gray-50"
-                }`}
-              >
-                <div
-                  className={`w-10 h-10 bg-gradient-to-r ${getCategoryColor(track.category)} rounded-lg flex items-center justify-center flex-shrink-0`}
-                >
-                  {getCategoryIcon(track.category)}
-                </div>
-
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-medium text-gray-900 truncate">{track.title}</h4>
-                  <p className="text-sm text-gray-600 truncate">{track.artist}</p>
-                </div>
-
-                <div className="text-right">
-                  <Badge variant="outline" className="text-xs capitalize mb-1">
-                    {track.category}
-                  </Badge>
-                  <p className="text-xs text-gray-500">{track.duration}</p>
+            {/* Track Info & Controls */}
+            <div className="space-y-6 text-center md:text-left">
+              <div>
+                <h3 className="text-2xl font-bold mb-2">{currentTrack.title}</h3>
+                <p className="text-purple-200 text-lg">{currentTrack.artist}</p>
+                <p className="text-purple-300 text-sm mt-2">{currentTrack.description}</p>
+                <div className="flex flex-wrap gap-2 mt-3 justify-center md:justify-start">
+                  {currentTrack.tags.map((tag) => (
+                    <Badge key={tag} variant="outline" className="border-purple-300 text-purple-200">
+                      {tag}
+                    </Badge>
+                  ))}
                 </div>
               </div>
-            ))}
+
+              {/* Progress Bar */}
+              <div className="space-y-2">
+                <Slider
+                  value={[currentTrack.duration > 0 ? (currentTime / currentTrack.duration) * 100 : 0]}
+                  onValueChange={handleSeek}
+                  className="w-full"
+                />
+                <div className="flex justify-between text-sm text-purple-200">
+                  <span>{formatTime(currentTime)}</span>
+                  <span>{formatTime(currentTrack.duration)}</span>
+                </div>
+              </div>
+
+              {/* Main Controls */}
+              <div className="flex items-center justify-center gap-4">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsShuffled(!isShuffled)}
+                  className={`text-white hover:bg-white/20 ${isShuffled ? "text-pink-300" : ""}`}
+                >
+                  <Shuffle className="w-4 h-4" />
+                </Button>
+
+                <Button variant="ghost" size="sm" onClick={handlePrevious} className="text-white hover:bg-white/20">
+                  <SkipBack className="w-5 h-5" />
+                </Button>
+
+                <Button
+                  onClick={togglePlay}
+                  className="w-12 h-12 rounded-full bg-white text-purple-900 hover:bg-purple-100"
+                >
+                  {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6 ml-1" />}
+                </Button>
+
+                <Button variant="ghost" size="sm" onClick={handleNext} className="text-white hover:bg-white/20">
+                  <SkipForward className="w-5 h-5" />
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setRepeatMode(repeatMode === "none" ? "all" : repeatMode === "all" ? "one" : "none")}
+                  className={`text-white hover:bg-white/20 ${repeatMode !== "none" ? "text-pink-300" : ""}`}
+                >
+                  <Repeat className="w-4 h-4" />
+                  {repeatMode === "one" && <span className="text-xs ml-1">1</span>}
+                </Button>
+              </div>
+            </div>
+
+            {/* Volume & Actions */}
+            <div className="space-y-6">
+              {/* Volume Control */}
+              <div className="flex items-center gap-3">
+                <Button variant="ghost" size="sm" onClick={toggleMute} className="text-white hover:bg-white/20">
+                  {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                </Button>
+                <Slider
+                  value={[isMuted ? 0 : volume]}
+                  onValueChange={handleVolumeChange}
+                  max={100}
+                  className="flex-1"
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-2 justify-center">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => toggleLike(currentTrack.id)}
+                  className={`text-white hover:bg-white/20 ${currentTrack.isLiked ? "text-pink-300" : ""}`}
+                >
+                  <Heart className={`w-4 h-4 ${currentTrack.isLiked ? "fill-current" : ""}`} />
+                  <span className="ml-1 text-sm">{currentTrack.likes}</span>
+                </Button>
+
+                <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">
+                  <Share className="w-4 h-4" />
+                </Button>
+
+                <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">
+                  <Download className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Track Library */}
+      <Card className="bg-white/95 backdrop-blur-sm">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Music className="w-5 h-5" />
+            Healing Audio Library
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Tabs value={activeCategory} onValueChange={setActiveCategory}>
+            <TabsList className="grid w-full grid-cols-5 mb-6">
+              <TabsTrigger value="all">All</TabsTrigger>
+              <TabsTrigger value="meditation" className="flex items-center gap-2">
+                <Headphones className="w-4 h-4" />
+                Meditation
+              </TabsTrigger>
+              <TabsTrigger value="affirmations" className="flex items-center gap-2">
+                <Heart className="w-4 h-4" />
+                Affirmations
+              </TabsTrigger>
+              <TabsTrigger value="nature" className="flex items-center gap-2">
+                <Waves className="w-4 h-4" />
+                Nature
+              </TabsTrigger>
+              <TabsTrigger value="binaural" className="flex items-center gap-2">
+                <Brain className="w-4 h-4" />
+                Binaural
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value={activeCategory} className="space-y-4">
+              {filteredTracks.map((track) => (
+                <Card
+                  key={track.id}
+                  className={`cursor-pointer transition-all hover:shadow-md ${
+                    currentTrack.id === track.id ? "ring-2 ring-purple-500 bg-purple-50" : ""
+                  }`}
+                  onClick={() => setCurrentTrack(track)}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-4">
+                      <img
+                        src={track.imageUrl || "/placeholder.svg"}
+                        alt={track.title}
+                        className="w-16 h-16 rounded-lg object-cover"
+                      />
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          {getCategoryIcon(track.category)}
+                          <h4 className="font-semibold truncate">{track.title}</h4>
+                          {currentTrack.id === track.id && <Badge className="bg-purple-500">Now Playing</Badge>}
+                        </div>
+                        <p className="text-sm text-gray-600 mb-1">{track.artist}</p>
+                        <p className="text-xs text-gray-500 line-clamp-2">{track.description}</p>
+                      </div>
+
+                      <div className="flex items-center gap-3 text-sm text-gray-500">
+                        <span>{formatTime(track.duration)}</span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            toggleLike(track.id)
+                          }}
+                          className={`${track.isLiked ? "text-pink-500" : "text-gray-400"} hover:text-pink-500`}
+                        >
+                          <Heart className={`w-4 h-4 ${track.isLiked ? "fill-current" : ""}`} />
+                          <span className="ml-1">{track.likes}</span>
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
     </div>
