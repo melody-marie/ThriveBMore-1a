@@ -3,127 +3,25 @@
 import type React from "react"
 import { createContext, useContext, useState, useCallback, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { AlertTriangle, Phone, MessageSquare, Shield, X } from "lucide-react"
+import { AlertTriangle, Phone, Shield, X } from "lucide-react"
+
+interface EmergencyContextType {
+  isEmergencyActive: boolean
+  activateEmergency: () => void
+  deactivateEmergency: () => void
+  emergencyContacts: EmergencyContact[]
+}
 
 interface EmergencyContact {
   id: string
   name: string
   phone: string
   type: "crisis" | "medical" | "legal" | "community"
-  available24h: boolean
 }
 
-interface EmergencyContextType {
-  isEmergencyMode: boolean
-  activateEmergency: () => void
-  deactivateEmergency: () => void
-  emergencyContacts: EmergencyContact[]
-  quickExit: () => void
-}
+const EmergencyContext = createContext<EmergencyContextType | undefined>(undefined)
 
-const EmergencyContext = createContext<EmergencyContextType | null>(null)
-
-const EMERGENCY_CONTACTS: EmergencyContact[] = [
-  {
-    id: "1",
-    name: "ThriveBMore Crisis Line",
-    phone: "(443) 555-1015",
-    type: "crisis",
-    available24h: true,
-  },
-  {
-    id: "2",
-    name: "Trans Lifeline",
-    phone: "877-565-8860",
-    type: "crisis",
-    available24h: true,
-  },
-  {
-    id: "3",
-    name: "National Suicide Prevention",
-    phone: "988",
-    type: "crisis",
-    available24h: true,
-  },
-  {
-    id: "4",
-    name: "Baltimore Crisis Response",
-    phone: "410-433-5175",
-    type: "medical",
-    available24h: true,
-  },
-  {
-    id: "5",
-    name: "LGBTQ Legal Aid",
-    phone: "(443) 555-2020",
-    type: "legal",
-    available24h: false,
-  },
-  {
-    id: "6",
-    name: "Community Safety Network",
-    phone: "(443) 555-3030",
-    type: "community",
-    available24h: true,
-  },
-]
-
-export function EmergencyProvider({ children }: { children: React.ReactNode }) {
-  const [isEmergencyMode, setIsEmergencyMode] = useState(false)
-
-  const activateEmergency = useCallback(() => {
-    setIsEmergencyMode(true)
-    // Add emergency mode styling to body
-    document.body.classList.add("emergency-mode")
-  }, [])
-
-  const deactivateEmergency = useCallback(() => {
-    setIsEmergencyMode(false)
-    document.body.classList.remove("emergency-mode")
-  }, [])
-
-  const quickExit = useCallback(() => {
-    // Clear browser history and redirect to a safe site
-    window.location.replace("https://www.google.com")
-  }, [])
-
-  useEffect(() => {
-    // Emergency keyboard shortcut (Ctrl/Cmd + Shift + E)
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key === "E") {
-        event.preventDefault()
-        activateEmergency()
-      }
-      // Quick exit shortcut (Ctrl/Cmd + Shift + Q)
-      if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key === "Q") {
-        event.preventDefault()
-        quickExit()
-      }
-    }
-
-    window.addEventListener("keydown", handleKeyDown)
-    return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [activateEmergency, quickExit])
-
-  const contextValue: EmergencyContextType = {
-    isEmergencyMode,
-    activateEmergency,
-    deactivateEmergency,
-    emergencyContacts: EMERGENCY_CONTACTS,
-    quickExit,
-  }
-
-  return (
-    <EmergencyContext.Provider value={contextValue}>
-      {children}
-      {isEmergencyMode && <EmergencyModal />}
-    </EmergencyContext.Provider>
-  )
-}
-
-export function useEmergency() {
+export function useEmergency(): EmergencyContextType {
   const context = useContext(EmergencyContext)
   if (!context) {
     throw new Error("useEmergency must be used within an EmergencyProvider")
@@ -131,103 +29,142 @@ export function useEmergency() {
   return context
 }
 
-function EmergencyModal() {
-  const { deactivateEmergency, emergencyContacts, quickExit } = useEmergency()
+const defaultEmergencyContacts: EmergencyContact[] = [
+  {
+    id: "1",
+    name: "Trans Lifeline",
+    phone: "877-565-8860",
+    type: "crisis",
+  },
+  {
+    id: "2",
+    name: "National Suicide Prevention Lifeline",
+    phone: "988",
+    type: "crisis",
+  },
+  {
+    id: "3",
+    name: "Baltimore Crisis Response",
+    phone: "410-433-5175",
+    type: "crisis",
+  },
+  {
+    id: "4",
+    name: "Emergency Services",
+    phone: "911",
+    type: "medical",
+  },
+]
 
-  const getContactTypeColor = (type: EmergencyContact["type"]) => {
-    switch (type) {
-      case "crisis":
-        return "bg-red-500 text-white"
-      case "medical":
-        return "bg-blue-500 text-white"
-      case "legal":
-        return "bg-purple-500 text-white"
-      case "community":
-        return "bg-green-500 text-white"
-      default:
-        return "bg-gray-500 text-white"
+export function EmergencyProvider({ children }: { children: React.ReactNode }) {
+  const [isEmergencyActive, setIsEmergencyActive] = useState<boolean>(false)
+  const [emergencyContacts] = useState<EmergencyContact[]>(defaultEmergencyContacts)
+
+  const activateEmergency = useCallback(() => {
+    setIsEmergencyActive(true)
+    // Play emergency sound if available
+    try {
+      const audio = new Audio("/sounds/emergency-alert.mp3")
+      audio.volume = 0.3
+      audio.play().catch(() => {
+        // Silently fail if audio can't play
+      })
+    } catch {
+      // Silently fail if audio creation fails
     }
+  }, [])
+
+  const deactivateEmergency = useCallback(() => {
+    setIsEmergencyActive(false)
+  }, [])
+
+  // Emergency keyboard shortcut (Ctrl/Cmd + Shift + E)
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key === "E") {
+        event.preventDefault()
+        activateEmergency()
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [activateEmergency])
+
+  const contextValue: EmergencyContextType = {
+    isEmergencyActive,
+    activateEmergency,
+    deactivateEmergency,
+    emergencyContacts,
   }
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-red-900/95 backdrop-blur-sm flex items-center justify-center p-4">
-      <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto crisis-alert">
-        <CardHeader className="text-center">
-          <div className="flex items-center justify-between">
-            <AlertTriangle className="w-8 h-8 text-red-600" />
-            <CardTitle className="text-2xl font-bold text-red-800">Emergency Support</CardTitle>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={deactivateEmergency}
-              className="text-red-600 hover:text-red-800"
-            >
-              <X className="w-5 h-5" />
-            </Button>
-          </div>
-          <p className="text-red-700 mt-2">You are not alone. Help is available 24/7.</p>
-        </CardHeader>
+    <EmergencyContext.Provider value={contextValue}>
+      {children}
 
-        <CardContent className="space-y-4">
-          <div className="grid gap-3">
-            {emergencyContacts.map((contact) => (
-              <div
-                key={contact.id}
-                className="flex items-center justify-between p-3 bg-white rounded-lg border border-red-200"
+      {/* Emergency Modal */}
+      {isEmergencyActive && (
+        <div className="fixed inset-0 z-[9999] bg-red-900/90 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-2xl max-w-md w-full p-6 border-4 border-red-500 emergency-pulse">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-6 w-6 text-red-500" />
+                <h2 className="text-xl font-bold text-red-600 dark:text-red-400">Emergency Mode Active</h2>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={deactivateEmergency}
+                className="text-gray-500 hover:text-gray-700"
               >
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h4 className="font-semibold text-gray-900">{contact.name}</h4>
-                    <Badge className={getContactTypeColor(contact.type)}>{contact.type}</Badge>
-                    {contact.available24h && (
-                      <Badge variant="outline" className="text-green-600 border-green-600">
-                        24/7
-                      </Badge>
-                    )}
-                  </div>
-                  <p className="text-lg font-mono text-gray-700">{contact.phone}</p>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    size="sm"
-                    onClick={() => window.open(`tel:${contact.phone}`)}
-                    className="bg-green-600 hover:bg-green-700 text-white"
-                  >
-                    <Phone className="w-4 h-4 mr-1" />
-                    Call
-                  </Button>
-                  <Button type="button" size="sm" variant="outline" onClick={() => window.open(`sms:${contact.phone}`)}>
-                    <MessageSquare className="w-4 h-4 mr-1" />
-                    Text
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
 
-          <div className="border-t pt-4 space-y-3">
-            <div className="text-center">
-              <p className="text-sm text-red-700 mb-3">If you are in immediate danger, call 911</p>
-              <div className="flex gap-2 justify-center">
-                <Button type="button" onClick={quickExit} variant="destructive" className="flex items-center gap-2">
-                  <Shield className="w-4 h-4" />
-                  Quick Exit (Ctrl+Shift+Q)
-                </Button>
+            <p className="text-sm text-gray-600 dark:text-gray-300 mb-6">
+              You are in a safe space. Choose an emergency contact below or use the quick exit feature.
+            </p>
+
+            <div className="space-y-3">
+              {emergencyContacts.map((contact) => (
                 <Button
+                  key={contact.id}
                   type="button"
-                  onClick={deactivateEmergency}
                   variant="outline"
-                  className="border-red-300 text-red-700 hover:bg-red-50 bg-transparent"
+                  className="w-full justify-start gap-3 h-auto p-3 border-red-200 hover:border-red-300 hover:bg-red-50 bg-transparent"
+                  onClick={() => {
+                    window.open(`tel:${contact.phone}`, "_self")
+                  }}
                 >
-                  Close Emergency Panel
+                  <Phone className="h-4 w-4 text-red-500" />
+                  <div className="text-left">
+                    <div className="font-medium text-gray-900 dark:text-gray-100">{contact.name}</div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">{contact.phone}</div>
+                  </div>
                 </Button>
-              </div>
+              ))}
+
+              <Button
+                type="button"
+                variant="secondary"
+                className="w-full gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700"
+                onClick={() => {
+                  // Quick exit - redirect to a safe site
+                  window.location.href = "https://www.google.com"
+                }}
+              >
+                <Shield className="h-4 w-4" />
+                Quick Exit to Google
+              </Button>
+            </div>
+
+            <div className="mt-6 text-xs text-gray-500 dark:text-gray-400 text-center">
+              Press Ctrl+Shift+E to activate emergency mode anytime
             </div>
           </div>
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+      )}
+    </EmergencyContext.Provider>
   )
 }
