@@ -1,137 +1,122 @@
 "use client"
 
 import type React from "react"
-import { createContext, useContext, useState, useEffect } from "react"
+import { createContext, useContext, useState, useCallback, useEffect } from "react"
 
-interface User {
+interface SoulVaultEntry {
   id: string
-  name: string
-  email?: string
-  isAnonymous: boolean
-  preferences: {
-    theme: "light" | "dark" | "auto"
-    notifications: boolean
-    privacy: "public" | "private" | "anonymous"
-  }
-  vaultUnlocked: boolean
-  lastActive: Date
+  title: string
+  content: string
+  type: "affirmation" | "memory" | "goal" | "gratitude"
+  createdAt: Date
+  isPrivate: boolean
+  tags: string[]
 }
 
 interface SoulVaultContextType {
-  user: User | null
-  isAuthenticated: boolean
-  login: (userData: Partial<User>) => void
-  logout: () => void
-  updateUser: (updates: Partial<User>) => void
-  lockVault: () => void
-  unlockVault: () => void
+  entries: SoulVaultEntry[]
+  addEntry: (entry: Omit<SoulVaultEntry, "id" | "createdAt">) => void
+  updateEntry: (id: string, updates: Partial<SoulVaultEntry>) => void
+  deleteEntry: (id: string) => void
+  getEntriesByType: (type: SoulVaultEntry["type"]) => SoulVaultEntry[]
+  searchEntries: (query: string) => SoulVaultEntry[]
+  isEncrypted: boolean
+  toggleEncryption: () => void
 }
 
-const SoulVaultContext = createContext<SoulVaultContextType | undefined>(undefined)
+const SoulVaultContext = createContext<SoulVaultContextType | null>(null)
+
+const STORAGE_KEY = "thrivebmore-soul-vault"
 
 export function SoulVaultProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [entries, setEntries] = useState<SoulVaultEntry[]>([])
+  const [isEncrypted, setIsEncrypted] = useState(true)
 
-  const login = (userData: Partial<User>) => {
-    const newUser: User = {
-      id: userData.id || Date.now().toString(),
-      name: userData.name || "Anonymous User",
-      email: userData.email,
-      isAnonymous: userData.isAnonymous ?? true,
-      preferences: {
-        theme: "light",
-        notifications: true,
-        privacy: "anonymous",
-        ...userData.preferences,
-      },
-      vaultUnlocked: false,
-      lastActive: new Date(),
-    }
-
-    setUser(newUser)
-    setIsAuthenticated(true)
-
-    // Store in localStorage for persistence
-    localStorage.setItem("soul_vault_user", JSON.stringify(newUser))
-  }
-
-  const logout = () => {
-    setUser(null)
-    setIsAuthenticated(false)
-    localStorage.removeItem("soul_vault_user")
-    localStorage.removeItem("vault_unlocked")
-  }
-
-  const updateUser = (updates: Partial<User>) => {
-    if (user) {
-      const updatedUser = { ...user, ...updates, lastActive: new Date() }
-      setUser(updatedUser)
-      localStorage.setItem("soul_vault_user", JSON.stringify(updatedUser))
-    }
-  }
-
-  const lockVault = () => {
-    if (user) {
-      updateUser({ vaultUnlocked: false })
-      localStorage.removeItem("vault_unlocked")
-    }
-  }
-
-  const unlockVault = () => {
-    if (user) {
-      updateUser({ vaultUnlocked: true })
-      localStorage.setItem("vault_unlocked", "true")
-    }
-  }
-
-  // Restore user session on page load
+  // Load entries from localStorage on mount
   useEffect(() => {
-    const savedUser = localStorage.getItem("soul_vault_user")
-    const vaultUnlocked = localStorage.getItem("vault_unlocked")
-
-    if (savedUser) {
-      const userData = JSON.parse(savedUser)
-      userData.vaultUnlocked = vaultUnlocked === "true"
-      setUser(userData)
-      setIsAuthenticated(true)
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY)
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        setEntries(
+          parsed.map((entry: any) => ({
+            ...entry,
+            createdAt: new Date(entry.createdAt),
+          })),
+        )
+      }
+    } catch (error) {
+      console.error("Failed to load soul vault entries:", error)
     }
   }, [])
 
-  // Auto-lock vault after inactivity
+  // Save entries to localStorage whenever entries change
   useEffect(() => {
-    if (user?.vaultUnlocked) {
-      const timer = setTimeout(
-        () => {
-          lockVault()
-        },
-        15 * 60 * 1000,
-      ) // 15 minutes
-
-      return () => clearTimeout(timer)
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(entries))
+    } catch (error) {
+      console.error("Failed to save soul vault entries:", error)
     }
-  }, [user?.vaultUnlocked, user?.lastActive])
+  }, [entries])
 
-  return (
-    <SoulVaultContext.Provider
-      value={{
-        user,
-        isAuthenticated,
-        login,
-        logout,
-        updateUser,
-        lockVault,
-        unlockVault,
-      }}
-    >
-      {children}
-    </SoulVaultContext.Provider>
+  const addEntry = useCallback((entryData: Omit<SoulVaultEntry, "id" | "createdAt">) => {
+    const newEntry: SoulVaultEntry = {
+      ...entryData,
+      id: crypto.randomUUID(),
+      createdAt: new Date(),
+    }
+    setEntries((prev) => [newEntry, ...prev])
+  }, [])
+
+  const updateEntry = useCallback((id: string, updates: Partial<SoulVaultEntry>) => {
+    setEntries((prev) => prev.map((entry) => (entry.id === id ? { ...entry, ...updates } : entry)))
+  }, [])
+
+  const deleteEntry = useCallback((id: string) => {
+    setEntries((prev) => prev.filter((entry) => entry.id !== id))
+  }, [])
+
+  const getEntriesByType = useCallback(
+    (type: SoulVaultEntry["type"]) => {
+      return entries.filter((entry) => entry.type === type)
+    },
+    [entries],
   )
+
+  const searchEntries = useCallback(
+    (query: string) => {
+      const lowercaseQuery = query.toLowerCase()
+      return entries.filter(
+        (entry) =>
+          entry.title.toLowerCase().includes(lowercaseQuery) ||
+          entry.content.toLowerCase().includes(lowercaseQuery) ||
+          entry.tags.some((tag) => tag.toLowerCase().includes(lowercaseQuery)),
+      )
+    },
+    [entries],
+  )
+
+  const toggleEncryption = useCallback(() => {
+    setIsEncrypted((prev) => !prev)
+  }, [])
+
+  const contextValue: SoulVaultContextType = {
+    entries,
+    addEntry,
+    updateEntry,
+    deleteEntry,
+    getEntriesByType,
+    searchEntries,
+    isEncrypted,
+    toggleEncryption,
+  }
+
+  return <SoulVaultContext.Provider value={contextValue}>{children}</SoulVaultContext.Provider>
 }
 
 export function useSoulVault() {
   const context = useContext(SoulVaultContext)
-  if (context === undefined) {
+  if (!context) {
     throw new Error("useSoulVault must be used within a SoulVaultProvider")
   }
   return context
