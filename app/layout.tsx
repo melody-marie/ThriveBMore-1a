@@ -1,15 +1,12 @@
 import type React from "react"
-import type { Metadata, Viewport } from "next"
+import type { Metadata } from "next"
 import { GeistSans } from "geist/font/sans"
 import { GeistMono } from "geist/font/mono"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
 import { SoulVaultProvider } from "@/components/soul-vault-provider"
 import { EmergencyProvider } from "@/components/emergency-provider"
-import { Inter } from "next/font/google"
 import "./globals.css"
-
-const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: "ThriveBMore Liberation Stack",
@@ -20,13 +17,7 @@ export const metadata: Metadata = {
   creator: "ThriveBMore Liberation Stack",
   publisher: "ThriveBMore Community",
   robots: "noindex, nofollow",
-}
-
-export const viewport: Viewport = {
-  width: "device-width",
-  initialScale: 1,
-  maximumScale: 1,
-  themeColor: "#8B5CF6",
+  viewport: "width=device-width, initial-scale=1, maximum-scale=1",
 }
 
 export default function RootLayout({
@@ -37,6 +28,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <meta name="theme-color" content="#8B5CF6" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="ThriveBMore" />
@@ -45,44 +37,26 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <style>{`
           html {
-            font-family: ${GeistSans.style.fontFamily}, ${inter.style.fontFamily};
+            font-family: ${GeistSans.style.fontFamily};
             --font-sans: ${GeistSans.variable};
             --font-mono: ${GeistMono.variable};
           }
           
-          /* Aziza Spiritual Background */
-          .aziza-spiritual-background {
-            background-image: url('/aziza-spiritual-background.png');
-            background-size: cover;
-            background-repeat: no-repeat;
-            background-position: center;
-            background-attachment: fixed;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            z-index: -2;
-            pointer-events: none;
+          /* Sigil Background */
+          .sigil-background {
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fillRule='evenodd'%3E%3Cg fill='%23a855f7' fillOpacity='0.05'%3E%3Cpath d='M30 30l15-15v30l-15-15zm0 0l-15 15h30l-15-15z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            background-size: 60px 60px;
+            background-repeat: repeat;
           }
           
-          /* Enhanced Spiritual Overlay */
-          .spiritual-overlay {
-            background: linear-gradient(
-              135deg, 
-              rgba(0, 0, 0, 0.7) 0%, 
-              rgba(139, 92, 246, 0.3) 25%,
-              rgba(236, 72, 153, 0.3) 50%,
-              rgba(245, 158, 11, 0.3) 75%,
-              rgba(0, 0, 0, 0.7) 100%
-            );
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            z-index: -1;
-            pointer-events: none;
+          /* Carousel Animations */
+          .carousel-slide {
+            animation: carousel-slide 0.5s ease-in-out;
+          }
+          
+          @keyframes carousel-slide {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
           }
           
           /* Floating Navigation */
@@ -111,38 +85,11 @@ export default function RootLayout({
             box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
             transition: all 0.3s ease;
             backdrop-filter: blur(10px);
-            position: relative;
-          }
-          
-          .floating-nav-button::before {
-            content: '';
-            position: absolute;
-            inset: -2px;
-            background: linear-gradient(45deg, #8B5CF6, #EC4899, #F59E0B, #10B981);
-            border-radius: inherit;
-            z-index: -1;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-          }
-          
-          .floating-nav-button:hover::before {
-            opacity: 0.7;
-            animation: mystical-rotate 2s linear infinite;
           }
           
           .floating-nav-button:hover {
             transform: scale(1.1);
             box-shadow: 0 6px 20px rgba(139, 92, 246, 0.5);
-          }
-          
-          /* Carousel Animations */
-          .carousel-slide {
-            animation: carousel-slide 0.8s ease-out;
-          }
-          
-          @keyframes carousel-slide {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
           }
           
           /* Emergency Signal Styles */
@@ -193,28 +140,11 @@ export default function RootLayout({
           
           /* Liberation Card Styles */
           .liberation-card {
-            background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.95) 100%);
-            backdrop-filter: blur(15px);
+            background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(248,250,252,0.9) 100%);
+            backdrop-filter: blur(10px);
             border: 1px solid rgba(168, 85, 247, 0.2);
             box-shadow: 0 8px 32px rgba(0,0,0,0.1);
             transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-          }
-          
-          .liberation-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: url('/aziza-spiritual-background.png');
-            background-size: 200px 100px;
-            background-repeat: no-repeat;
-            background-position: top right;
-            opacity: 0.02;
-            pointer-events: none;
           }
           
           .liberation-card:hover {
@@ -231,22 +161,6 @@ export default function RootLayout({
             background-clip: text;
             font-weight: 700;
             text-shadow: 0 0 30px rgba(139, 92, 246, 0.3);
-            position: relative;
-          }
-          
-          .afro-futuristic-text::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: url('/aziza-spiritual-background.png');
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center;
-            opacity: 0.05;
-            pointer-events: none;
           }
           
           /* Floating Animation */
@@ -300,21 +214,6 @@ export default function RootLayout({
               rgba(16, 185, 129, 0.1) 75%,
               rgba(139, 92, 246, 0.1) 100%
             );
-            position: relative;
-          }
-          
-          .sanctuary-gradient::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: url('/aziza-spiritual-background.png');
-            background-size: 300px 150px;
-            background-repeat: repeat;
-            opacity: 0.03;
-            pointer-events: none;
           }
           
           /* Crisis Alert Styles */
@@ -334,21 +233,6 @@ export default function RootLayout({
             border: 2px solid transparent;
             background: linear-gradient(white, white) padding-box,
                         linear-gradient(45deg, #8B5CF6, #EC4899, #F59E0B) border-box;
-            position: relative;
-          }
-          
-          .spiritual-border::after {
-            content: '';
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            width: 40px;
-            height: 40px;
-            background: url('/aziza-spiritual-background.png');
-            background-size: contain;
-            background-repeat: no-repeat;
-            opacity: 0.1;
-            pointer-events: none;
           }
           
           /* Comfort Item Animation */
@@ -393,73 +277,10 @@ export default function RootLayout({
             100% { transform: translateX(-100%); }
           }
           
-          /* Copyright Footer with Aziza Branding */
-          .copyright-footer {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: linear-gradient(135deg, rgba(0, 0, 0, 0.9) 0%, rgba(139, 92, 246, 0.2) 100%);
-            color: white;
-            text-align: center;
-            padding: 8px 20px;
-            font-size: 11px;
-            z-index: 999;
-            backdrop-filter: blur(15px);
-            border-top: 1px solid rgba(139, 92, 246, 0.3);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 15px;
-          }
-          
-          .copyright-footer::before {
-            content: '';
-            width: 30px;
-            height: 30px;
-            background: url('/aziza-spiritual-background.png');
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: left center;
-            opacity: 0.7;
-            flex-shrink: 0;
-          }
-          
-          .copyright-footer::after {
-            content: '';
-            width: 30px;
-            height: 30px;
-            background: url('/aziza-spiritual-background.png');
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: right center;
-            opacity: 0.7;
-            flex-shrink: 0;
-          }
-          
-          .copyright-text {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-          }
-          
-          .copyright-main {
-            font-weight: 600;
-            color: #F59E0B;
-            text-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
-          }
-          
-          .copyright-sub {
-            font-size: 10px;
-            color: rgba(255, 255, 255, 0.8);
-            font-style: italic;
-          }
-          
           /* Mobile Optimizations */
           @media (max-width: 768px) {
             .liberation-card {
-              backdrop-filter: blur(8px);
+              backdrop-filter: blur(5px);
             }
             
             .mystical-glow::before {
@@ -474,23 +295,6 @@ export default function RootLayout({
             .floating-nav-button {
               width: 45px;
               height: 45px;
-            }
-            
-            .copyright-footer {
-              padding: 6px 15px;
-              font-size: 10px;
-              flex-direction: column;
-              gap: 5px;
-            }
-            
-            .copyright-footer::before,
-            .copyright-footer::after {
-              width: 20px;
-              height: 20px;
-            }
-            
-            .aziza-spiritual-background {
-              background-size: contain;
             }
           }
           
@@ -521,47 +325,34 @@ export default function RootLayout({
               -webkit-text-fill-color: #000;
               text-shadow: none;
             }
-            
-            .aziza-spiritual-background {
-              opacity: 0.1;
-            }
           }
           
-          /* Print Styles */
-          @media print {
-            .floating-nav,
-            .copyright-footer,
-            .aziza-spiritual-background,
-            .spiritual-overlay {
-              display: none;
-            }
+          /* Copyright Footer */
+          .copyright-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            text-align: center;
+            padding: 5px;
+            font-size: 12px;
+            z-index: 999;
+            backdrop-filter: blur(10px);
           }
         `}</style>
       </head>
-      <body className={`min-h-screen relative ${inter.className}`}>
-        {/* Aziza Spiritual Background */}
-        <div className="aziza-spiritual-background"></div>
-
-        {/* Spiritual Overlay for better readability */}
-        <div className="spiritual-overlay"></div>
-
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+      <body className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 sigil-background">
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           <EmergencyProvider>
             <SoulVaultProvider>
               {children}
               <Toaster />
-
-              {/* Enhanced Copyright Footer with Aziza Branding */}
+              {/* Copyright Footer */}
               <div className="copyright-footer">
-                <div className="copyright-text">
-                  <div className="copyright-main">
-                    © 2024 ThriveBMore Liberation Stack | Aziza Okoro, Spiritual Practitioner
-                  </div>
-                  <div className="copyright-sub">
-                    Underground Railroad of Trans Liberation | Built with love for the Black Trans community |
-                    www.thrivebmore.org | (443) 555-1015
-                  </div>
-                </div>
+                © 2024 ThriveBMore Liberation Stack | Built with love for the Black Trans community | Underground
+                Railroad of Trans Liberation
               </div>
             </SoulVaultProvider>
           </EmergencyProvider>

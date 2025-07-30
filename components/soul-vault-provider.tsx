@@ -1,125 +1,138 @@
 "use client"
 
 import type React from "react"
-import { createContext, useContext, useState, useCallback, useEffect } from "react"
+import { createContext, useContext, useState, useEffect } from "react"
 
-interface SoulVaultEntry {
+interface User {
   id: string
-  title: string
-  content: string
-  type: "journal" | "affirmation" | "memory" | "goal"
-  timestamp: Date
-  mood?: "joyful" | "peaceful" | "struggling" | "angry" | "hopeful" | "grateful"
-  isPrivate: boolean
+  name: string
+  email?: string
+  isAnonymous: boolean
+  preferences: {
+    theme: "light" | "dark" | "auto"
+    notifications: boolean
+    privacy: "public" | "private" | "anonymous"
+  }
+  vaultUnlocked: boolean
+  lastActive: Date
 }
 
 interface SoulVaultContextType {
-  entries: SoulVaultEntry[]
-  addEntry: (entry: Omit<SoulVaultEntry, "id" | "timestamp">) => void
-  updateEntry: (id: string, updates: Partial<SoulVaultEntry>) => void
-  deleteEntry: (id: string) => void
-  getEntriesByType: (type: SoulVaultEntry["type"]) => SoulVaultEntry[]
-  getEntriesByMood: (mood: SoulVaultEntry["mood"]) => SoulVaultEntry[]
-  isVaultLocked: boolean
-  unlockVault: (password: string) => boolean
+  user: User | null
+  isAuthenticated: boolean
+  login: (userData: Partial<User>) => void
+  logout: () => void
+  updateUser: (updates: Partial<User>) => void
   lockVault: () => void
+  unlockVault: () => void
 }
 
 const SoulVaultContext = createContext<SoulVaultContextType | undefined>(undefined)
 
-export function useSoulVault(): SoulVaultContextType {
+export function SoulVaultProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<User | null>(null)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+
+  const login = (userData: Partial<User>) => {
+    const newUser: User = {
+      id: userData.id || Date.now().toString(),
+      name: userData.name || "Anonymous User",
+      email: userData.email,
+      isAnonymous: userData.isAnonymous ?? true,
+      preferences: {
+        theme: "light",
+        notifications: true,
+        privacy: "anonymous",
+        ...userData.preferences,
+      },
+      vaultUnlocked: false,
+      lastActive: new Date(),
+    }
+
+    setUser(newUser)
+    setIsAuthenticated(true)
+
+    // Store in localStorage for persistence
+    localStorage.setItem("soul_vault_user", JSON.stringify(newUser))
+  }
+
+  const logout = () => {
+    setUser(null)
+    setIsAuthenticated(false)
+    localStorage.removeItem("soul_vault_user")
+    localStorage.removeItem("vault_unlocked")
+  }
+
+  const updateUser = (updates: Partial<User>) => {
+    if (user) {
+      const updatedUser = { ...user, ...updates, lastActive: new Date() }
+      setUser(updatedUser)
+      localStorage.setItem("soul_vault_user", JSON.stringify(updatedUser))
+    }
+  }
+
+  const lockVault = () => {
+    if (user) {
+      updateUser({ vaultUnlocked: false })
+      localStorage.removeItem("vault_unlocked")
+    }
+  }
+
+  const unlockVault = () => {
+    if (user) {
+      updateUser({ vaultUnlocked: true })
+      localStorage.setItem("vault_unlocked", "true")
+    }
+  }
+
+  // Restore user session on page load
+  useEffect(() => {
+    const savedUser = localStorage.getItem("soul_vault_user")
+    const vaultUnlocked = localStorage.getItem("vault_unlocked")
+
+    if (savedUser) {
+      const userData = JSON.parse(savedUser)
+      userData.vaultUnlocked = vaultUnlocked === "true"
+      setUser(userData)
+      setIsAuthenticated(true)
+    }
+  }, [])
+
+  // Auto-lock vault after inactivity
+  useEffect(() => {
+    if (user?.vaultUnlocked) {
+      const timer = setTimeout(
+        () => {
+          lockVault()
+        },
+        15 * 60 * 1000,
+      ) // 15 minutes
+
+      return () => clearTimeout(timer)
+    }
+  }, [user?.vaultUnlocked, user?.lastActive])
+
+  return (
+    <SoulVaultContext.Provider
+      value={{
+        user,
+        isAuthenticated,
+        login,
+        logout,
+        updateUser,
+        lockVault,
+        unlockVault,
+      }}
+    >
+      {children}
+    </SoulVaultContext.Provider>
+  )
+}
+
+export function useSoulVault() {
   const context = useContext(SoulVaultContext)
-  if (!context) {
+  if (context === undefined) {
     throw new Error("useSoulVault must be used within a SoulVaultProvider")
   }
   return context
-}
-
-const VAULT_PASSWORD = "liberation2024" // In production, this would be user-set and encrypted
-
-export function SoulVaultProvider({ children }: { children: React.ReactNode }) {
-  const [entries, setEntries] = useState<SoulVaultEntry[]>([])
-  const [isVaultLocked, setIsVaultLocked] = useState<boolean>(true)
-
-  // Load entries from localStorage on mount
-  useEffect(() => {
-    try {
-      const savedEntries = localStorage.getItem("soulVaultEntries")
-      if (savedEntries) {
-        const parsedEntries = JSON.parse(savedEntries).map((entry: any) => ({
-          ...entry,
-          timestamp: new Date(entry.timestamp),
-        }))
-        setEntries(parsedEntries)
-      }
-    } catch (error) {
-      console.error("Failed to load soul vault entries:", error)
-    }
-  }, [])
-
-  // Save entries to localStorage whenever entries change
-  useEffect(() => {
-    try {
-      localStorage.setItem("soulVaultEntries", JSON.stringify(entries))
-    } catch (error) {
-      console.error("Failed to save soul vault entries:", error)
-    }
-  }, [entries])
-
-  const addEntry = useCallback((entryData: Omit<SoulVaultEntry, "id" | "timestamp">) => {
-    const newEntry: SoulVaultEntry = {
-      ...entryData,
-      id: crypto.randomUUID(),
-      timestamp: new Date(),
-    }
-    setEntries((prev) => [newEntry, ...prev])
-  }, [])
-
-  const updateEntry = useCallback((id: string, updates: Partial<SoulVaultEntry>) => {
-    setEntries((prev) => prev.map((entry) => (entry.id === id ? { ...entry, ...updates } : entry)))
-  }, [])
-
-  const deleteEntry = useCallback((id: string) => {
-    setEntries((prev) => prev.filter((entry) => entry.id !== id))
-  }, [])
-
-  const getEntriesByType = useCallback(
-    (type: SoulVaultEntry["type"]) => {
-      return entries.filter((entry) => entry.type === type)
-    },
-    [entries],
-  )
-
-  const getEntriesByMood = useCallback(
-    (mood: SoulVaultEntry["mood"]) => {
-      return entries.filter((entry) => entry.mood === mood)
-    },
-    [entries],
-  )
-
-  const unlockVault = useCallback((password: string) => {
-    if (password === VAULT_PASSWORD) {
-      setIsVaultLocked(false)
-      return true
-    }
-    return false
-  }, [])
-
-  const lockVault = useCallback(() => {
-    setIsVaultLocked(true)
-  }, [])
-
-  const contextValue: SoulVaultContextType = {
-    entries,
-    addEntry,
-    updateEntry,
-    deleteEntry,
-    getEntriesByType,
-    getEntriesByMood,
-    isVaultLocked,
-    unlockVault,
-    lockVault,
-  }
-
-  return <SoulVaultContext.Provider value={contextValue}>{children}</SoulVaultContext.Provider>
 }

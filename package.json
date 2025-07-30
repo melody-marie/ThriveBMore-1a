@@ -1,11 +1,10 @@
 {
-  "name": "thrivebmore-liberation-stack",
+  "name": "my-v0-project",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "build": "next build",
     "dev": "next dev",
-    "postinstall": "pnpm config set ignore-scripts false && pnpm rebuild sharp",
     "lint": "next lint",
     "start": "next start"
   },
@@ -54,10 +53,8 @@
     "react-day-picker": "latest",
     "react-dom": "^19",
     "react-hook-form": "latest",
-    "react-native": "latest",
     "react-resizable-panels": "latest",
     "recharts": "latest",
-    "sharp": "^0.33.5",
     "sonner": "latest",
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",

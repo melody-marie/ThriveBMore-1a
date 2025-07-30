@@ -1,12 +1,11 @@
 "use client"
 
 import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Home, Heart, Users, MessageCircle, Volume2, UserCheck, Lock, Mail, AlertTriangle, Menu, X } from "lucide-react"
+import { Heart, Users, MessageCircle, Volume2, AlertTriangle, Lock, Mail, UserCheck, Home, Menu, X } from "lucide-react"
 
 interface FloatingNavigationProps {
   onNavigate: (section: string) => void
-  currentSection: string
+  currentSection?: string
 }
 
 export function FloatingNavigation({ onNavigate, currentSection }: FloatingNavigationProps) {
@@ -18,9 +17,9 @@ export function FloatingNavigation({ onNavigate, currentSection }: FloatingNavig
     { id: "mellys-spot", icon: Users, label: "Melly's Spot", color: "from-blue-500 to-cyan-500" },
     { id: "omni-bot", icon: MessageCircle, label: "OmniBot", color: "from-yellow-500 to-orange-500" },
     { id: "sound-healing", icon: Volume2, label: "Sound Healing", color: "from-green-500 to-emerald-500" },
-    { id: "peer-connector", icon: UserCheck, label: "Peer Support", color: "from-emerald-500 to-green-500" },
-    { id: "soul-vault", icon: Lock, label: "SoulVault", color: "from-indigo-500 to-purple-500" },
-    { id: "liberation-mail", icon: Mail, label: "LiberationMail", color: "from-rose-500 to-pink-500" },
+    { id: "peer-connector", icon: UserCheck, label: "Peer Support", color: "from-indigo-500 to-purple-500" },
+    { id: "soul-vault", icon: Lock, label: "SoulVault", color: "from-purple-500 to-indigo-500" },
+    { id: "liberation-mail", icon: Mail, label: "LiberationMail", color: "from-pink-500 to-rose-500" },
     { id: "emergency", icon: AlertTriangle, label: "Emergency", color: "from-red-500 to-red-600" },
   ]
 
@@ -31,14 +30,14 @@ export function FloatingNavigation({ onNavigate, currentSection }: FloatingNavig
 
   return (
     <div className="floating-nav">
-      {/* Main Toggle Button */}
-      <Button
-        className="floating-nav-button mystical-glow"
+      {/* Main Menu Button */}
+      <button
+        className="floating-nav-button"
         onClick={() => setIsExpanded(!isExpanded)}
-        title="Navigation Menu"
+        title={isExpanded ? "Close Menu" : "Open Menu"}
       >
-        {isExpanded ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-      </Button>
+        {isExpanded ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+      </button>
 
       {/* Navigation Items */}
       {isExpanded && (
@@ -48,33 +47,24 @@ export function FloatingNavigation({ onNavigate, currentSection }: FloatingNavig
             const isActive = currentSection === item.id
 
             return (
-              <Button
+              <button
                 key={item.id}
-                className={`floating-nav-button ${isActive ? "ring-2 ring-white ring-offset-2" : ""}`}
-                style={{
-                  background: isActive
-                    ? `linear-gradient(135deg, var(--tw-gradient-stops))`
-                    : `linear-gradient(135deg, ${item.color.replace("from-", "").replace("to-", ", ")})`,
-                  animationDelay: `${index * 0.1}s`,
-                }}
+                className={`floating-nav-button ${isActive ? "ring-2 ring-white" : ""}`}
                 onClick={() => handleNavigate(item.id)}
                 title={item.label}
+                style={{
+                  background: isActive
+                    ? `linear-gradient(135deg, ${item.color.split(" ")[1]}, ${item.color.split(" ")[3]})`
+                    : `linear-gradient(135deg, ${item.color.split(" ")[1]}80, ${item.color.split(" ")[3]}80)`,
+                  animationDelay: `${index * 0.1}s`,
+                }}
               >
-                <IconComponent className="w-4 h-4" />
-              </Button>
+                <IconComponent className="w-5 h-5" />
+              </button>
             )
           })}
         </div>
       )}
-
-      {/* Quick Access Emergency Button */}
-      <Button
-        className="floating-nav-button bg-gradient-to-r from-red-500 to-red-600 emergency-pulse"
-        onClick={() => handleNavigate("emergency")}
-        title="Emergency Signal"
-      >
-        <AlertTriangle className="w-5 h-5" />
-      </Button>
     </div>
   )
 }
