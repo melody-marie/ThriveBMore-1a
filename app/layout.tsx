@@ -42,14 +42,13 @@ export default function RootLayout({
             --font-mono: ${GeistMono.variable};
           }
           
-          /* Aziza Sigil Background */
-          .aziza-sigil-background {
-            background-image: url('/aziza-sigil-branding.png');
-            background-size: 400px 200px;
-            background-repeat: repeat;
+          /* Aziza Spiritual Background */
+          .aziza-spiritual-background {
+            background-image: url('/aziza-spiritual-background.png');
+            background-size: cover;
+            background-repeat: no-repeat;
             background-position: center;
             background-attachment: fixed;
-            opacity: 0.03;
             position: fixed;
             top: 0;
             left: 0;
@@ -59,22 +58,23 @@ export default function RootLayout({
             pointer-events: none;
           }
           
-          /* Enhanced Sigil Pattern */
-          .sigil-pattern {
-            background-image: 
-              radial-gradient(circle at 25% 25%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
-              radial-gradient(circle at 75% 75%, rgba(236, 72, 153, 0.1) 0%, transparent 50%),
-              url('/aziza-sigil-branding.png');
-            background-size: 
-              200px 200px,
-              200px 200px,
-              300px 150px;
-            background-repeat: repeat;
-            background-position: 
-              0 0,
-              100px 100px,
-              center;
-            opacity: 0.05;
+          /* Enhanced Spiritual Overlay */
+          .spiritual-overlay {
+            background: linear-gradient(
+              135deg, 
+              rgba(0, 0, 0, 0.7) 0%, 
+              rgba(139, 92, 246, 0.3) 25%,
+              rgba(236, 72, 153, 0.3) 50%,
+              rgba(245, 158, 11, 0.3) 75%,
+              rgba(0, 0, 0, 0.7) 100%
+            );
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: -1;
+            pointer-events: none;
           }
           
           /* Floating Navigation */
@@ -201,7 +201,7 @@ export default function RootLayout({
             left: 0;
             right: 0;
             bottom: 0;
-            background: url('/aziza-sigil-branding.png');
+            background: url('/aziza-spiritual-background.png');
             background-size: 200px 100px;
             background-repeat: no-repeat;
             background-position: top right;
@@ -233,7 +233,7 @@ export default function RootLayout({
             left: 0;
             right: 0;
             bottom: 0;
-            background: url('/aziza-sigil-branding.png');
+            background: url('/aziza-spiritual-background.png');
             background-size: contain;
             background-repeat: no-repeat;
             background-position: center;
@@ -302,7 +302,7 @@ export default function RootLayout({
             left: 0;
             right: 0;
             bottom: 0;
-            background: url('/aziza-sigil-branding.png');
+            background: url('/aziza-spiritual-background.png');
             background-size: 300px 150px;
             background-repeat: repeat;
             opacity: 0.03;
@@ -336,7 +336,7 @@ export default function RootLayout({
             right: 10px;
             width: 40px;
             height: 40px;
-            background: url('/aziza-sigil-branding.png');
+            background: url('/aziza-spiritual-background.png');
             background-size: contain;
             background-repeat: no-repeat;
             opacity: 0.1;
@@ -409,7 +409,7 @@ export default function RootLayout({
             content: '';
             width: 30px;
             height: 30px;
-            background: url('/aziza-sigil-branding.png');
+            background: url('/aziza-spiritual-background.png');
             background-size: contain;
             background-repeat: no-repeat;
             background-position: left center;
@@ -421,7 +421,7 @@ export default function RootLayout({
             content: '';
             width: 30px;
             height: 30px;
-            background: url('/aziza-sigil-branding.png');
+            background: url('/aziza-spiritual-background.png');
             background-size: contain;
             background-repeat: no-repeat;
             background-position: right center;
@@ -481,8 +481,8 @@ export default function RootLayout({
               height: 20px;
             }
             
-            .aziza-sigil-background {
-              background-size: 300px 150px;
+            .aziza-spiritual-background {
+              background-size: contain;
             }
           }
           
@@ -514,7 +514,7 @@ export default function RootLayout({
               text-shadow: none;
             }
             
-            .aziza-sigil-background {
+            .aziza-spiritual-background {
               opacity: 0.1;
             }
           }
@@ -523,15 +523,19 @@ export default function RootLayout({
           @media print {
             .floating-nav,
             .copyright-footer,
-            .aziza-sigil-background {
+            .aziza-spiritual-background,
+            .spiritual-overlay {
               display: none;
             }
           }
         `}</style>
       </head>
-      <body className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 relative">
-        {/* Aziza Sigil Background */}
-        <div className="aziza-sigil-background"></div>
+      <body className="min-h-screen relative">
+        {/* Aziza Spiritual Background */}
+        <div className="aziza-spiritual-background"></div>
+
+        {/* Spiritual Overlay for better readability */}
+        <div className="spiritual-overlay"></div>
 
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           <EmergencyProvider>
@@ -547,7 +551,7 @@ export default function RootLayout({
                   </div>
                   <div className="copyright-sub">
                     Underground Railroad of Trans Liberation | Built with love for the Black Trans community |
-                    www.thrivebmore.org | (205) 390-7506
+                    www.thrivebmore.org | (443) 555-1015
                   </div>
                 </div>
               </div>
