@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Play, Pause, Lock, AlertTriangle, Heart, Users, Sparkles } from "lucide-react"
+import { Play, Pause, Lock, AlertTriangle, Heart, Users, Sparkles, Phone } from "lucide-react"
 
 export function Ticker() {
   const [currentIndex, setCurrentIndex] = useState(0)
@@ -21,7 +21,8 @@ export function Ticker() {
     },
     {
       id: 2,
-      message: "🚨 Crisis Support Available 24/7 - Trans Lifeline: 877-565-8860 | National: 988",
+      message:
+        "🚨 Crisis Support Available 24/7 - Trans Lifeline: 877-565-8860 | National: 988 | Aziza: (205) 390-7506",
       priority: "urgent",
       encrypted: true,
       category: "crisis",
@@ -109,7 +110,8 @@ export function Ticker() {
     },
     {
       id: 13,
-      message: "🌈 Aziza Okoro available for spiritual sessions - Healing in the quantum field",
+      message:
+        "🌈 Aziza Okoro available for spiritual sessions - Contact: (205) 390-7506 | Healing in the quantum field",
       priority: "low",
       encrypted: false,
       category: "spiritual",
@@ -122,6 +124,14 @@ export function Ticker() {
       encrypted: false,
       category: "mission",
       icon: Sparkles,
+    },
+    {
+      id: 15,
+      message: "📞 Direct Support Line: (205) 390-7506 - Aziza Okoro, Spiritual Practitioner & Wellness Facilitator",
+      priority: "medium",
+      encrypted: false,
+      category: "contact",
+      icon: Phone,
     },
   ]
 
@@ -173,6 +183,8 @@ export function Ticker() {
         return "border-blue-300 text-blue-700"
       case "spiritual":
         return "border-purple-300 text-purple-700"
+      case "contact":
+        return "border-yellow-300 text-yellow-700"
       default:
         return "border-gray-300 text-gray-700"
     }

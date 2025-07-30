@@ -547,7 +547,7 @@ export default function RootLayout({
                   </div>
                   <div className="copyright-sub">
                     Underground Railroad of Trans Liberation | Built with love for the Black Trans community |
-                    www.thrivebmore.org | (443) 555-1015
+                    www.thrivebmore.org | (205) 390-7506
                   </div>
                 </div>
               </div>
