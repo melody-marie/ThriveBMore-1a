@@ -16,7 +16,7 @@
     --card-foreground: 240 10% 3.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 240 10% 3.9%;
-    --primary: 240 5.9% 10%;
+    --primary: 240 9% 17%;
     --primary-foreground: 0 0% 98%;
     --secondary: 240 4.8% 95.9%;
     --secondary-foreground: 240 5.9% 10%;
@@ -505,15 +505,16 @@ select:focus {
 
 /* Emergency Signal Styles */
 .emergency-pulse {
-  animation: emergency-pulse 1s ease-in-out infinite alternate;
+  animation: emergency-pulse 2s infinite;
 }
 
 @keyframes emergency-pulse {
-  from {
-    box-shadow: 0 0 20px rgba(239, 68, 68, 0.7);
+  0%,
+  100% {
+    opacity: 1;
   }
-  to {
-    box-shadow: 0 0 40px rgba(239, 68, 68, 1);
+  50% {
+    opacity: 0.5;
   }
 }
 
@@ -740,7 +741,6 @@ select:focus {
 
 .spiritual-border::after {
   content: "";
-  position: absolute;
   top: 10px;
   right: 10px;
   width: 40px;
@@ -748,6 +748,7 @@ select:focus {
   background: url("/aziza-spiritual-background.png");
   background-size: contain;
   background-repeat: no-repeat;
+  background-position: left center;
   opacity: 0.1;
   pointer-events: none;
 }
@@ -875,5 +876,51 @@ select:focus {
 
   .aziza-spiritual-background {
     background-size: contain;
+  }
+}
+
+/* Liberation Stack Custom Styles */
+.liberation-gradient {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.spiritual-glow {
+  box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
+}
+
+.floating-animation {
+  animation: floating 3s ease-in-out infinite;
+}
+
+@keyframes floating {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+  .floating-animation,
+  .emergency-pulse {
+    animation: none;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 0%;
+    --border: 0 0% 0%;
+  }
+
+  .dark {
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
+    --border: 0 0% 100%;
   }
 }

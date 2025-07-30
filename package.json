@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "approve-builds": "pnpm config set ignore-scripts false",
     "build": "next build",
     "dev": "next dev",
+    "postinstall": "pnpm config set ignore-scripts false && pnpm rebuild sharp",
     "lint": "next lint",
     "start": "next start"
   },

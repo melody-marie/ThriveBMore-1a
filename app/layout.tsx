@@ -6,7 +6,10 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
 import { SoulVaultProvider } from "@/components/soul-vault-provider"
 import { EmergencyProvider } from "@/components/emergency-provider"
+import { Inter } from "next/font/google"
 import "./globals.css"
+
+const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: "ThriveBMore Liberation Stack",
@@ -42,7 +45,7 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <style>{`
           html {
-            font-family: ${GeistSans.style.fontFamily};
+            font-family: ${GeistSans.style.fontFamily}, ${inter.style.fontFamily};
             --font-sans: ${GeistSans.variable};
             --font-mono: ${GeistMono.variable};
           }
@@ -535,14 +538,14 @@ export default function RootLayout({
           }
         `}</style>
       </head>
-      <body className="min-h-screen relative">
+      <body className={`min-h-screen relative ${inter.className}`}>
         {/* Aziza Spiritual Background */}
         <div className="aziza-spiritual-background"></div>
 
         {/* Spiritual Overlay for better readability */}
         <div className="spiritual-overlay"></div>
 
-        <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <EmergencyProvider>
             <SoulVaultProvider>
               {children}
