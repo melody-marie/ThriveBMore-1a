@@ -1,750 +1,333 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import {
-  Heart,
-  Star,
-  Sparkles,
-  Cloud,
-  Rainbow,
-  Flower,
-  FlowerIcon as Butterfly,
-  Cat,
-  Dog,
-  BeakerIcon as Bear,
-  Rabbit,
-  X,
-  Volume2,
-  VolumeX,
-  Palette,
-  Book,
-  Music,
-  Gamepad2,
-  Cookie,
-  Coffee,
-  Cake,
-  IceCream,
-} from "lucide-react"
+import { Slider } from "@/components/ui/slider"
+import { Heart, Palette, BookOpen, Music, Wind } from "lucide-react"
 
-interface LittleSpaceProps {
-  isVisible: boolean
-  onClose: () => void
-}
+export function LittleSpace() {
+  const [currentActivity, setCurrentActivity] = useState("comfort")
+  const [breathingActive, setBreathingActive] = useState(false)
+  const [breathingPhase, setBreathingPhase] = useState("inhale")
+  const [musicVolume, setMusicVolume] = useState([50])
+  const [selectedColor, setSelectedColor] = useState("#FFB6C1")
 
-interface ColoringPage {
-  id: string
-  name: string
-  difficulty: "easy" | "medium" | "hard"
-  category: "animals" | "nature" | "fantasy" | "patterns"
-  colors: string[]
-}
-
-interface ComfortItem {
-  id: string
-  name: string
-  icon: any
-  description: string
-  comfort_level: number
-  category: "plushies" | "blankets" | "snacks" | "drinks" | "activities"
-}
-
-interface Story {
-  id: string
-  title: string
-  duration: string
-  category: "bedtime" | "adventure" | "comfort" | "educational"
-  age_range: string
-  preview: string
-}
-
-export function LittleSpace({ isVisible, onClose }: LittleSpaceProps) {
-  const [currentTab, setCurrentTab] = useState("comfort")
-  const [selectedColors, setSelectedColors] = useState<string[]>([])
-  const [currentColoring, setCurrentColoring] = useState<ColoringPage | null>(null)
-  const [soundEnabled, setSoundEnabled] = useState(true)
-  const [currentStory, setCurrentStory] = useState<Story | null>(null)
-  const [comfortItems, setComfortItems] = useState<ComfortItem[]>([])
-
-  const colorPalette = [
-    "#FF6B9D",
-    "#FFB5C1",
-    "#FFC0CB",
-    "#E6E6FA",
-    "#DDA0DD",
-    "#98FB98",
-    "#90EE90",
-    "#87CEEB",
-    "#87CEFA",
-    "#B0E0E6",
-    "#FFE4B5",
-    "#FFEFD5",
-    "#FFF8DC",
-    "#F0E68C",
-    "#FFFFE0",
-    "#FFB347",
-    "#FFA500",
-    "#FF7F50",
-    "#FF6347",
-    "#FF4500",
-  ]
-
-  const coloringPages: ColoringPage[] = [
-    {
-      id: "butterfly",
-      name: "Pretty Butterfly",
-      difficulty: "easy",
-      category: "animals",
-      colors: ["#FF6B9D", "#87CEEB", "#98FB98", "#FFE4B5"],
-    },
-    {
-      id: "flower-garden",
-      name: "Flower Garden",
-      difficulty: "medium",
-      category: "nature",
-      colors: ["#FF6B9D", "#98FB98", "#FFE4B5", "#DDA0DD"],
-    },
-    {
-      id: "teddy-bear",
-      name: "Cuddly Teddy Bear",
-      difficulty: "easy",
-      category: "animals",
-      colors: ["#FFB347", "#FFA500", "#FF6B9D", "#87CEEB"],
-    },
-    {
-      id: "rainbow-castle",
-      name: "Rainbow Castle",
-      difficulty: "hard",
-      category: "fantasy",
-      colors: ["#FF6B9D", "#FFB347", "#98FB98", "#87CEEB", "#DDA0DD"],
-    },
-  ]
-
-  const comfortItemsData: ComfortItem[] = [
-    {
-      id: "teddy",
-      name: "Soft Teddy Bear",
-      icon: Bear,
-      description: "A warm, cuddly friend for comfort",
-      comfort_level: 9,
-      category: "plushies",
-    },
-    {
-      id: "bunny",
-      name: "Fluffy Bunny",
-      icon: Rabbit,
-      description: "Gentle and soft, perfect for snuggles",
-      comfort_level: 8,
-      category: "plushies",
-    },
-    {
-      id: "kitty",
-      name: "Sleepy Kitty",
-      icon: Cat,
-      description: "Purrs softly and brings peace",
-      comfort_level: 9,
-      category: "plushies",
-    },
-    {
-      id: "puppy",
-      name: "Happy Puppy",
-      icon: Dog,
-      description: "Loyal friend who's always happy to see you",
-      comfort_level: 8,
-      category: "plushies",
-    },
-    {
-      id: "warm-milk",
-      name: "Warm Milk",
-      icon: Coffee,
-      description: "Soothing and helps you feel sleepy",
-      comfort_level: 7,
-      category: "drinks",
-    },
-    {
-      id: "cookies",
-      name: "Chocolate Chip Cookies",
-      icon: Cookie,
-      description: "Sweet treats that make everything better",
-      comfort_level: 8,
-      category: "snacks",
-    },
-    {
-      id: "ice-cream",
-      name: "Strawberry Ice Cream",
-      icon: IceCream,
-      description: "Cold and sweet, perfect for happy moments",
-      comfort_level: 9,
-      category: "snacks",
-    },
-    {
-      id: "cake",
-      name: "Birthday Cake",
-      icon: Cake,
-      description: "Special treat for celebrating you",
-      comfort_level: 10,
-      category: "snacks",
-    },
-  ]
-
-  const stories: Story[] = [
-    {
-      id: "sleepy-forest",
-      title: "The Sleepy Forest Friends",
-      duration: "12 minutes",
-      category: "bedtime",
-      age_range: "3-8",
-      preview: "Join the woodland animals as they get ready for bed in their cozy forest home...",
-    },
-    {
-      id: "rainbow-adventure",
-      title: "The Rainbow Adventure",
-      duration: "15 minutes",
-      category: "adventure",
-      age_range: "4-10",
-      preview: "Follow Luna as she discovers a magical rainbow that leads to a land of wonder...",
-    },
-    {
-      id: "gentle-dragon",
-      title: "The Gentle Dragon",
-      duration: "10 minutes",
-      category: "comfort",
-      age_range: "3-7",
-      preview: "Meet Sparkle, a kind dragon who helps children feel brave and loved...",
-    },
-    {
-      id: "counting-stars",
-      title: "Counting Stars",
-      duration: "8 minutes",
-      category: "bedtime",
-      age_range: "2-6",
-      preview: "A peaceful journey through the night sky, counting twinkling stars...",
-    },
-  ]
-
-  const activities = [
-    {
-      id: "breathing",
-      name: "Bubble Breathing",
-      icon: Cloud,
-      description: "Breathe in like you're smelling flowers, breathe out like you're blowing bubbles",
-      duration: "5 minutes",
-    },
-    {
-      id: "counting",
-      name: "Counting Game",
-      icon: Star,
-      description: "Count pretty things: stars, flowers, butterflies, and more!",
-      duration: "10 minutes",
-    },
-    {
-      id: "colors",
-      name: "Color Hunt",
-      icon: Rainbow,
-      description: "Find all the colors of the rainbow around you",
-      duration: "15 minutes",
-    },
-    {
-      id: "music",
-      name: "Gentle Music",
-      icon: Music,
-      description: "Listen to soft, calming melodies",
-      duration: "20 minutes",
-    },
-  ]
-
+  // Breathing exercise timer
   useEffect(() => {
-    setComfortItems(comfortItemsData)
-  }, [])
+    if (!breathingActive) return
 
-  const playComfortSound = () => {
-    if (soundEnabled) {
-      // Create gentle chime sound
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
-      const oscillator = audioContext.createOscillator()
-      const gainNode = audioContext.createGain()
+    const breathingCycle = setInterval(() => {
+      setBreathingPhase((prev) => {
+        if (prev === "inhale") return "hold"
+        if (prev === "hold") return "exhale"
+        return "inhale"
+      })
+    }, 4000)
 
-      oscillator.connect(gainNode)
-      gainNode.connect(audioContext.destination)
+    return () => clearInterval(breathingCycle)
+  }, [breathingActive])
 
-      oscillator.frequency.setValueAtTime(523.25, audioContext.currentTime) // C5
-      oscillator.frequency.setValueAtTime(659.25, audioContext.currentTime + 0.2) // E5
-      oscillator.frequency.setValueAtTime(783.99, audioContext.currentTime + 0.4) // G5
+  const comfortItems = [
+    { name: "Soft Teddy Bear", emoji: "🧸", comfort: "Warm hugs available" },
+    { name: "Cozy Blanket", emoji: "🛋️", comfort: "Wrapped in safety" },
+    { name: "Hot Cocoa", emoji: "☕", comfort: "Warm and sweet" },
+    { name: "Favorite Snacks", emoji: "🍪", comfort: "Comfort food ready" },
+    { name: "Gentle Music", emoji: "🎵", comfort: "Soothing melodies" },
+    { name: "Fairy Lights", emoji: "✨", comfort: "Magical ambiance" },
+  ]
 
-      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime)
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.6)
+  const colorPalette = ["#FFB6C1", "#E6E6FA", "#F0E68C", "#98FB98", "#87CEEB", "#DDA0DD", "#F5DEB3", "#FFA07A"]
 
-      oscillator.start(audioContext.currentTime)
-      oscillator.stop(audioContext.currentTime + 0.6)
-    }
-  }
-
-  const selectComfortItem = (item: ComfortItem) => {
-    playComfortSound()
-    // Add visual feedback or animation here
-  }
-
-  if (!isVisible) return null
+  const gentleStories = [
+    {
+      title: "The Magical Garden",
+      preview: "In a secret garden where flowers sing lullabies...",
+      duration: "5 min",
+    },
+    {
+      title: "Starlight Friends",
+      preview: "High above the clouds, little stars dance together...",
+      duration: "7 min",
+    },
+    {
+      title: "The Cozy Cave",
+      preview: "A friendly bear finds the perfect place to rest...",
+      duration: "4 min",
+    },
+  ]
 
   return (
-    <div className="fixed inset-0 bg-gradient-to-br from-pink-100 via-purple-100 to-blue-100 z-50 overflow-hidden">
-      {/* Floating decorative elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-10 left-10 text-pink-300 animate-bounce">
-          <Heart className="w-8 h-8" />
-        </div>
-        <div className="absolute top-20 right-20 text-purple-300 animate-pulse">
-          <Star className="w-6 h-6" />
-        </div>
-        <div className="absolute bottom-20 left-20 text-blue-300 animate-bounce" style={{ animationDelay: "1s" }}>
-          <Butterfly className="w-10 h-10" />
-        </div>
-        <div className="absolute bottom-10 right-10 text-yellow-300 animate-pulse" style={{ animationDelay: "2s" }}>
-          <Flower className="w-8 h-8" />
-        </div>
-        <div className="absolute top-1/2 left-5 text-green-300 animate-bounce" style={{ animationDelay: "0.5s" }}>
-          <Rainbow className="w-12 h-12" />
-        </div>
-        <div className="absolute top-1/3 right-5 text-pink-300 animate-pulse" style={{ animationDelay: "1.5s" }}>
-          <Sparkles className="w-6 h-6" />
-        </div>
-      </div>
-
-      {/* Header */}
-      <div className="bg-white/80 backdrop-blur-sm border-b border-pink-200 p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gradient-to-r from-pink-400 to-purple-400 rounded-full flex items-center justify-center">
-              <Heart className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-pink-500 to-purple-500 bg-clip-text text-transparent">
-                Little Space
-              </h1>
-              <p className="text-sm text-gray-600">Your safe, cozy corner 🧸💕</p>
+    <div className="space-y-6">
+      {/* Welcome Header */}
+      <Card className="liberation-card text-center">
+        <CardHeader>
+          <div className="flex justify-center mb-4">
+            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-pink-400 to-purple-400 flex items-center justify-center floating">
+              <Heart className="w-8 h-8 text-white" />
             </div>
           </div>
+          <CardTitle className="text-2xl afro-futuristic-text">Welcome to Little Space</CardTitle>
+          <p className="text-muted-foreground">A gentle sanctuary for your inner child to rest and play</p>
+        </CardHeader>
+      </Card>
 
-          <div className="flex items-center gap-2">
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => setSoundEnabled(!soundEnabled)}
-              className="text-pink-600 hover:bg-pink-100"
-            >
-              {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
-            </Button>
-            <Button size="sm" variant="ghost" onClick={onClose} className="text-pink-600 hover:bg-pink-100">
-              <X className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
-      </div>
+      {/* Activity Tabs */}
+      <Tabs value={currentActivity} onValueChange={setCurrentActivity}>
+        <TabsList className="grid w-full grid-cols-5 liberation-card">
+          <TabsTrigger value="comfort">
+            <Heart className="w-4 h-4 mr-1" />
+            Comfort
+          </TabsTrigger>
+          <TabsTrigger value="coloring">
+            <Palette className="w-4 h-4 mr-1" />
+            Colors
+          </TabsTrigger>
+          <TabsTrigger value="stories">
+            <BookOpen className="w-4 h-4 mr-1" />
+            Stories
+          </TabsTrigger>
+          <TabsTrigger value="music">
+            <Music className="w-4 h-4 mr-1" />
+            Music
+          </TabsTrigger>
+          <TabsTrigger value="breathing">
+            <Wind className="w-4 h-4 mr-1" />
+            Breathe
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Main Content */}
-      <div className="flex-1 p-6 overflow-hidden">
-        <Tabs value={currentTab} onValueChange={setCurrentTab} className="h-full flex flex-col">
-          <TabsList className="grid w-full grid-cols-5 bg-white/60 backdrop-blur-sm mb-6">
-            <TabsTrigger value="comfort" className="data-[state=active]:bg-pink-200">
-              <Heart className="w-4 h-4 mr-2" />
-              Comfort
-            </TabsTrigger>
-            <TabsTrigger value="coloring" className="data-[state=active]:bg-purple-200">
-              <Palette className="w-4 h-4 mr-2" />
-              Coloring
-            </TabsTrigger>
-            <TabsTrigger value="stories" className="data-[state=active]:bg-blue-200">
-              <Book className="w-4 h-4 mr-2" />
-              Stories
-            </TabsTrigger>
-            <TabsTrigger value="activities" className="data-[state=active]:bg-green-200">
-              <Gamepad2 className="w-4 h-4 mr-2" />
-              Activities
-            </TabsTrigger>
-            <TabsTrigger value="music" className="data-[state=active]:bg-yellow-200">
-              <Music className="w-4 h-4 mr-2" />
-              Music
-            </TabsTrigger>
-          </TabsList>
+        {/* Comfort Items */}
+        <TabsContent value="comfort" className="space-y-4">
+          <Card className="liberation-card">
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Heart className="w-5 h-5 mr-2 text-pink-400" />
+                Comfort Items
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {comfortItems.map((item, index) => (
+                  <Card
+                    key={index}
+                    className="cursor-pointer hover:scale-105 transition-transform bg-gradient-to-br from-pink-50/10 to-purple-50/10 border-pink-200/30"
+                  >
+                    <CardContent className="p-4 text-center">
+                      <div className="text-4xl mb-2 spiritual-pulse">{item.emoji}</div>
+                      <h3 className="font-medium text-sm">{item.name}</h3>
+                      <p className="text-xs text-muted-foreground mt-1">{item.comfort}</p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-          <div className="flex-1 overflow-hidden">
-            <TabsContent value="comfort" className="h-full">
-              <ScrollArea className="h-full">
-                <div className="space-y-6">
-                  <div className="text-center mb-6">
-                    <h2 className="text-3xl font-bold text-pink-600 mb-2">Comfort Corner</h2>
-                    <p className="text-gray-600">Choose something that makes you feel safe and happy 💕</p>
-                  </div>
-
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {comfortItems.map((item) => {
-                      const IconComponent = item.icon
-                      return (
-                        <Card
-                          key={item.id}
-                          className="cursor-pointer transition-all hover:scale-105 hover:shadow-lg bg-white/80 backdrop-blur-sm border-pink-200"
-                          onClick={() => selectComfortItem(item)}
-                        >
-                          <CardContent className="p-4 text-center">
-                            <div className="w-16 h-16 bg-gradient-to-r from-pink-300 to-purple-300 rounded-full flex items-center justify-center mx-auto mb-3">
-                              <IconComponent className="w-8 h-8 text-white" />
-                            </div>
-                            <h3 className="font-semibold text-gray-800 mb-1">{item.name}</h3>
-                            <p className="text-xs text-gray-600 mb-2">{item.description}</p>
-                            <div className="flex justify-center">
-                              {[...Array(5)].map((_, i) => (
-                                <Heart
-                                  key={i}
-                                  className={`w-3 h-3 ${
-                                    i < Math.floor(item.comfort_level / 2)
-                                      ? "text-pink-400 fill-current"
-                                      : "text-gray-300"
-                                  }`}
-                                />
-                              ))}
-                            </div>
-                            <Badge className="mt-2 bg-pink-100 text-pink-700 text-xs">{item.category}</Badge>
-                          </CardContent>
-                        </Card>
-                      )
-                    })}
-                  </div>
-
-                  <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 border border-pink-200">
-                    <h3 className="text-xl font-bold text-pink-600 mb-4 text-center">Gentle Reminders 🌸</h3>
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div className="bg-pink-50 rounded-lg p-4">
-                        <h4 className="font-semibold text-pink-700 mb-2">You are safe here 🛡️</h4>
-                        <p className="text-sm text-gray-600">
-                          This is your special space where you can be exactly who you are.
-                        </p>
-                      </div>
-                      <div className="bg-purple-50 rounded-lg p-4">
-                        <h4 className="font-semibold text-purple-700 mb-2">You are loved 💜</h4>
-                        <p className="text-sm text-gray-600">You deserve kindness, comfort, and all the good things.</p>
-                      </div>
-                      <div className="bg-blue-50 rounded-lg p-4">
-                        <h4 className="font-semibold text-blue-700 mb-2">It's okay to feel little 🧸</h4>
-                        <p className="text-sm text-gray-600">
-                          Your feelings are valid and this is a healthy way to cope.
-                        </p>
-                      </div>
-                      <div className="bg-green-50 rounded-lg p-4">
-                        <h4 className="font-semibold text-green-700 mb-2">Take your time 🌱</h4>
-                        <p className="text-sm text-gray-600">
-                          There's no rush. Stay as long as you need to feel better.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+        {/* Coloring Section */}
+        <TabsContent value="coloring" className="space-y-4">
+          <Card className="liberation-card">
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Palette className="w-5 h-5 mr-2 text-purple-400" />
+                Gentle Coloring
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Color Palette */}
+              <div>
+                <p className="text-sm font-medium mb-2">Choose your colors:</p>
+                <div className="flex flex-wrap gap-2">
+                  {colorPalette.map((color, index) => (
+                    <button
+                      key={index}
+                      className={`w-8 h-8 rounded-full border-2 transition-transform hover:scale-110 ${
+                        selectedColor === color ? "border-white scale-110" : "border-gray-300"
+                      }`}
+                      style={{ backgroundColor: color }}
+                      onClick={() => setSelectedColor(color)}
+                    />
+                  ))}
                 </div>
-              </ScrollArea>
-            </TabsContent>
+              </div>
 
-            <TabsContent value="coloring" className="h-full">
-              <ScrollArea className="h-full">
-                <div className="space-y-6">
-                  <div className="text-center mb-6">
-                    <h2 className="text-3xl font-bold text-purple-600 mb-2">Coloring Pages</h2>
-                    <p className="text-gray-600">Pick your favorite colors and create something beautiful! 🎨</p>
-                  </div>
+              {/* Simple Coloring Canvas */}
+              <div className="bg-white/10 rounded-lg p-6 text-center border-2 border-dashed border-purple-300/50">
+                <div className="space-y-4">
+                  <div className="text-6xl spiritual-pulse">🌸</div>
+                  <p className="text-muted-foreground">Coloring canvas coming soon!</p>
+                  <p className="text-sm text-muted-foreground">
+                    For now, imagine painting this beautiful flower with your chosen color:
+                    <span
+                      className="inline-block w-4 h-4 rounded-full ml-2 border border-white/30"
+                      style={{ backgroundColor: selectedColor }}
+                    ></span>
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-                  {!currentColoring ? (
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {coloringPages.map((page) => (
-                        <Card
-                          key={page.id}
-                          className="cursor-pointer transition-all hover:scale-105 hover:shadow-lg bg-white/80 backdrop-blur-sm border-purple-200"
-                          onClick={() => setCurrentColoring(page)}
-                        >
-                          <CardContent className="p-6 text-center">
-                            <div className="w-24 h-24 bg-gradient-to-r from-purple-300 to-pink-300 rounded-lg flex items-center justify-center mx-auto mb-4">
-                              <Palette className="w-12 h-12 text-white" />
-                            </div>
-                            <h3 className="font-semibold text-gray-800 mb-2">{page.name}</h3>
-                            <div className="flex justify-center gap-2 mb-3">
-                              {page.colors.slice(0, 4).map((color, index) => (
-                                <div
-                                  key={index}
-                                  className="w-4 h-4 rounded-full border-2 border-white shadow-sm"
-                                  style={{ backgroundColor: color }}
-                                />
-                              ))}
-                            </div>
-                            <Badge
-                              className={`text-xs ${
-                                page.difficulty === "easy"
-                                  ? "bg-green-100 text-green-700"
-                                  : page.difficulty === "medium"
-                                    ? "bg-yellow-100 text-yellow-700"
-                                    : "bg-red-100 text-red-700"
-                              }`}
-                            >
-                              {page.difficulty}
-                            </Badge>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-2xl font-bold text-purple-600">{currentColoring.name}</h3>
-                        <Button
-                          onClick={() => setCurrentColoring(null)}
-                          variant="outline"
-                          className="border-purple-300 text-purple-600"
-                        >
-                          Back to Pages
+        {/* Stories Section */}
+        <TabsContent value="stories" className="space-y-4">
+          <Card className="liberation-card">
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <BookOpen className="w-5 h-5 mr-2 text-blue-400" />
+                Gentle Stories
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {gentleStories.map((story, index) => (
+                <Card key={index} className="bg-gradient-to-r from-blue-50/10 to-purple-50/10 border-blue-200/30">
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h3 className="font-medium text-foreground">{story.title}</h3>
+                        <p className="text-sm text-muted-foreground mt-1">{story.preview}</p>
+                      </div>
+                      <div className="ml-4 text-right">
+                        <Badge variant="secondary" className="text-xs">
+                          {story.duration}
+                        </Badge>
+                        <Button size="sm" className="mt-2 w-full">
+                          <BookOpen className="w-3 h-3 mr-1" />
+                          Listen
                         </Button>
                       </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-                      <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-purple-200">
-                        <div className="grid lg:grid-cols-3 gap-6">
-                          <div className="lg:col-span-2">
-                            <div className="bg-white rounded-lg p-4 border-2 border-dashed border-purple-300 min-h-96 flex items-center justify-center">
-                              <div className="text-center text-gray-500">
-                                <Palette className="w-16 h-16 mx-auto mb-4 text-purple-300" />
-                                <p>Coloring canvas would appear here</p>
-                                <p className="text-sm mt-2">Interactive coloring functionality coming soon!</p>
-                              </div>
-                            </div>
-                          </div>
+        {/* Music Section */}
+        <TabsContent value="music" className="space-y-4">
+          <Card className="liberation-card">
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Music className="w-5 h-5 mr-2 text-green-400" />
+                Soft Music
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium">Volume</label>
+                  <Slider value={musicVolume} onValueChange={setMusicVolume} max={100} step={1} className="mt-2" />
+                  <p className="text-xs text-muted-foreground mt-1">Volume: {musicVolume[0]}%</p>
+                </div>
 
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {[
+                    { name: "Lullaby Dreams", emoji: "🌙", playing: false },
+                    { name: "Gentle Rain", emoji: "🌧️", playing: false },
+                    { name: "Music Box", emoji: "🎵", playing: true },
+                    { name: "Forest Sounds", emoji: "🌲", playing: false },
+                  ].map((track, index) => (
+                    <Card key={index} className="bg-gradient-to-r from-green-50/10 to-blue-50/10 border-green-200/30">
+                      <CardContent className="p-4 flex items-center justify-between">
+                        <div className="flex items-center">
+                          <span className="text-2xl mr-3">{track.emoji}</span>
                           <div>
-                            <h4 className="font-semibold text-purple-600 mb-4">Color Palette</h4>
-                            <div className="grid grid-cols-4 gap-2 mb-6">
-                              {colorPalette.map((color, index) => (
-                                <button
-                                  key={index}
-                                  className={`w-8 h-8 rounded-full border-2 transition-all hover:scale-110 ${
-                                    selectedColors.includes(color)
-                                      ? "border-purple-500 shadow-lg"
-                                      : "border-white shadow-sm"
-                                  }`}
-                                  style={{ backgroundColor: color }}
-                                  onClick={() => {
-                                    if (selectedColors.includes(color)) {
-                                      setSelectedColors(selectedColors.filter((c) => c !== color))
-                                    } else {
-                                      setSelectedColors([...selectedColors, color])
-                                    }
-                                  }}
-                                />
-                              ))}
-                            </div>
-
-                            <div className="space-y-3">
-                              <Button className="w-full bg-purple-500 hover:bg-purple-600 text-white">
-                                <Sparkles className="w-4 h-4 mr-2" />
-                                Magic Fill
-                              </Button>
-                              <Button
-                                variant="outline"
-                                className="w-full border-purple-300 text-purple-600 bg-transparent"
-                              >
-                                Clear All
-                              </Button>
-                              <Button
-                                variant="outline"
-                                className="w-full border-purple-300 text-purple-600 bg-transparent"
-                              >
-                                Save Picture
-                              </Button>
-                            </div>
+                            <p className="font-medium text-sm">{track.name}</p>
+                            {track.playing && (
+                              <Badge variant="secondary" className="text-xs mt-1">
+                                <Music className="w-3 h-3 mr-1" />
+                                Playing
+                              </Badge>
+                            )}
                           </div>
                         </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </ScrollArea>
-            </TabsContent>
-
-            <TabsContent value="stories" className="h-full">
-              <ScrollArea className="h-full">
-                <div className="space-y-6">
-                  <div className="text-center mb-6">
-                    <h2 className="text-3xl font-bold text-blue-600 mb-2">Story Time</h2>
-                    <p className="text-gray-600">Cozy up and listen to gentle stories 📚✨</p>
-                  </div>
-
-                  <div className="grid md:grid-cols-2 gap-6">
-                    {stories.map((story) => (
-                      <Card
-                        key={story.id}
-                        className="cursor-pointer transition-all hover:scale-105 hover:shadow-lg bg-white/80 backdrop-blur-sm border-blue-200"
-                        onClick={() => setCurrentStory(story)}
-                      >
-                        <CardHeader>
-                          <CardTitle className="text-blue-700 flex items-center gap-2">
-                            <Book className="w-5 h-5" />
-                            {story.title}
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <p className="text-gray-600 text-sm mb-4">{story.preview}</p>
-                          <div className="flex items-center justify-between text-xs text-gray-500">
-                            <Badge className="bg-blue-100 text-blue-700">{story.category}</Badge>
-                            <span>{story.duration}</span>
-                            <span>Ages {story.age_range}</span>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-
-                  {currentStory && (
-                    <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-blue-200">
-                      <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-2xl font-bold text-blue-600">{currentStory.title}</h3>
-                        <Button
-                          onClick={() => setCurrentStory(null)}
-                          variant="outline"
-                          className="border-blue-300 text-blue-600"
-                        >
-                          Close Story
+                        <Button size="sm" variant={track.playing ? "default" : "outline"}>
+                          {track.playing ? "Pause" : "Play"}
                         </Button>
-                      </div>
-
-                      <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-6 text-center">
-                        <Book className="w-16 h-16 mx-auto mb-4 text-blue-400" />
-                        <p className="text-gray-600 mb-4">Audio story player would appear here</p>
-                        <div className="flex justify-center gap-4">
-                          <Button className="bg-blue-500 hover:bg-blue-600 text-white">▶️ Play Story</Button>
-                          <Button variant="outline" className="border-blue-300 text-blue-600 bg-transparent">
-                            ⏸️ Pause
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
-              </ScrollArea>
-            </TabsContent>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-            <TabsContent value="activities" className="h-full">
-              <ScrollArea className="h-full">
-                <div className="space-y-6">
-                  <div className="text-center mb-6">
-                    <h2 className="text-3xl font-bold text-green-600 mb-2">Gentle Activities</h2>
-                    <p className="text-gray-600">Fun and calming activities to help you feel better 🌈</p>
-                  </div>
-
-                  <div className="grid md:grid-cols-2 gap-6">
-                    {activities.map((activity) => {
-                      const IconComponent = activity.icon
-                      return (
-                        <Card
-                          key={activity.id}
-                          className="cursor-pointer transition-all hover:scale-105 hover:shadow-lg bg-white/80 backdrop-blur-sm border-green-200"
-                        >
-                          <CardContent className="p-6">
-                            <div className="flex items-start gap-4">
-                              <div className="w-12 h-12 bg-gradient-to-r from-green-400 to-blue-400 rounded-full flex items-center justify-center flex-shrink-0">
-                                <IconComponent className="w-6 h-6 text-white" />
-                              </div>
-                              <div className="flex-1">
-                                <h3 className="font-semibold text-green-700 mb-2">{activity.name}</h3>
-                                <p className="text-gray-600 text-sm mb-3">{activity.description}</p>
-                                <div className="flex items-center justify-between">
-                                  <Badge className="bg-green-100 text-green-700 text-xs">{activity.duration}</Badge>
-                                  <Button size="sm" className="bg-green-500 hover:bg-green-600 text-white">
-                                    Start Activity
-                                  </Button>
-                                </div>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      )
-                    })}
-                  </div>
-
-                  <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 border border-green-200">
-                    <h3 className="text-xl font-bold text-green-600 mb-4 text-center">Breathing Exercise 🫧</h3>
-                    <div className="text-center">
-                      <div className="w-32 h-32 bg-gradient-to-r from-green-300 to-blue-300 rounded-full mx-auto mb-6 flex items-center justify-center animate-pulse">
-                        <Cloud className="w-16 h-16 text-white" />
-                      </div>
-                      <p className="text-gray-600 mb-4">
-                        Breathe in slowly through your nose... hold for 3 seconds... breathe out slowly through your
-                        mouth
-                      </p>
-                      <Button className="bg-green-500 hover:bg-green-600 text-white">Start Breathing Exercise</Button>
-                    </div>
+        {/* Breathing Exercises */}
+        <TabsContent value="breathing" className="space-y-4">
+          <Card className="liberation-card">
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Wind className="w-5 h-5 mr-2 text-cyan-400" />
+                Gentle Breathing
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-center space-y-6">
+              {/* Breathing Circle */}
+              <div className="flex justify-center">
+                <div
+                  className={`w-32 h-32 rounded-full border-4 border-cyan-400 flex items-center justify-center transition-all duration-4000 ${
+                    breathingActive
+                      ? breathingPhase === "inhale"
+                        ? "scale-110 bg-cyan-400/20"
+                        : breathingPhase === "hold"
+                          ? "scale-110 bg-cyan-400/30"
+                          : "scale-90 bg-cyan-400/10"
+                      : "scale-100 bg-cyan-400/10"
+                  }`}
+                >
+                  <div className="text-center">
+                    <Wind className="w-8 h-8 text-cyan-400 mx-auto mb-2" />
+                    {breathingActive && <p className="text-sm font-medium capitalize">{breathingPhase}</p>}
                   </div>
                 </div>
-              </ScrollArea>
-            </TabsContent>
+              </div>
 
-            <TabsContent value="music" className="h-full">
-              <ScrollArea className="h-full">
-                <div className="space-y-6">
-                  <div className="text-center mb-6">
-                    <h2 className="text-3xl font-bold text-yellow-600 mb-2">Gentle Music</h2>
-                    <p className="text-gray-600">Soft melodies to help you relax and feel peaceful 🎵</p>
+              {/* Breathing Instructions */}
+              <div className="space-y-2">
+                {breathingActive ? (
+                  <div>
+                    <p className="text-lg font-medium capitalize">{breathingPhase}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {breathingPhase === "inhale" && "Breathe in slowly and deeply"}
+                      {breathingPhase === "hold" && "Hold your breath gently"}
+                      {breathingPhase === "exhale" && "Breathe out slowly and completely"}
+                    </p>
                   </div>
+                ) : (
+                  <div>
+                    <p className="text-lg font-medium">Ready to breathe together?</p>
+                    <p className="text-sm text-muted-foreground">Follow the gentle rhythm to calm your mind and body</p>
+                  </div>
+                )}
+              </div>
 
-                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {[
-                      { name: "Lullaby Dreams", duration: "15:30", mood: "sleepy" },
-                      { name: "Forest Sounds", duration: "20:00", mood: "peaceful" },
-                      { name: "Gentle Piano", duration: "12:45", mood: "calm" },
-                      { name: "Ocean Waves", duration: "25:00", mood: "relaxing" },
-                      { name: "Music Box Melodies", duration: "18:20", mood: "nostalgic" },
-                      { name: "Soft Humming", duration: "10:15", mood: "comforting" },
-                    ].map((track, index) => (
-                      <Card
-                        key={index}
-                        className="cursor-pointer transition-all hover:scale-105 hover:shadow-lg bg-white/80 backdrop-blur-sm border-yellow-200"
-                      >
-                        <CardContent className="p-4 text-center">
-                          <div className="w-16 h-16 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full flex items-center justify-center mx-auto mb-3">
-                            <Music className="w-8 h-8 text-white" />
-                          </div>
-                          <h3 className="font-semibold text-gray-800 mb-1">{track.name}</h3>
-                          <p className="text-xs text-gray-600 mb-2">{track.duration}</p>
-                          <Badge className="bg-yellow-100 text-yellow-700 text-xs mb-3">{track.mood}</Badge>
-                          <Button size="sm" className="w-full bg-yellow-500 hover:bg-yellow-600 text-white">
-                            ▶️ Play
-                          </Button>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
+              {/* Control Button */}
+              <Button
+                onClick={() => setBreathingActive(!breathingActive)}
+                className={breathingActive ? "bg-red-500 hover:bg-red-600" : "bg-cyan-500 hover:bg-cyan-600"}
+              >
+                {breathingActive ? "Stop Breathing Exercise" : "Start Breathing Exercise"}
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
-                  <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 border border-yellow-200">
-                    <h3 className="text-xl font-bold text-yellow-600 mb-4 text-center">Now Playing 🎶</h3>
-                    <div className="text-center">
-                      <div className="w-24 h-24 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full mx-auto mb-4 flex items-center justify-center">
-                        <Music className="w-12 h-12 text-white" />
-                      </div>
-                      <h4 className="font-semibold text-gray-800 mb-2">Select a song to play</h4>
-                      <p className="text-gray-600 text-sm mb-4">Your music will appear here with playback controls</p>
-                      <div className="flex justify-center gap-4">
-                        <Button variant="outline" className="border-yellow-300 text-yellow-600 bg-transparent">
-                          ⏮️ Previous
-                        </Button>
-                        <Button className="bg-yellow-500 hover:bg-yellow-600 text-white">⏸️ Pause</Button>
-                        <Button variant="outline" className="border-yellow-300 text-yellow-600 bg-transparent">
-                          ⏭️ Next
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </ScrollArea>
-            </TabsContent>
-          </div>
-        </Tabs>
+      {/* Floating Comfort Elements */}
+      <div className="fixed bottom-6 right-6 space-y-2 pointer-events-none">
+        <div className="text-2xl floating">⭐</div>
+        <div className="text-2xl floating" style={{ animationDelay: "1s" }}>
+          🌙
+        </div>
+        <div className="text-2xl floating" style={{ animationDelay: "2s" }}>
+          ✨
+        </div>
       </div>
     </div>
   )
 }
-
-export default LittleSpace
