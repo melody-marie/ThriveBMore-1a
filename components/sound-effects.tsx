@@ -1,119 +1,218 @@
 "use client"
 
-import type React from "react"
-
-import { useState, useRef, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Slider } from "@/components/ui/slider"
 import { Badge } from "@/components/ui/badge"
-import { Volume2, VolumeX, Play, Pause, Waves, Wind, Zap, Heart, Bell, Circle } from "lucide-react"
+import { Slider } from "@/components/ui/slider"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import {
+  Play,
+  Pause,
+  Volume2,
+  VolumeX,
+  RotateCcw,
+  Settings,
+  Cloud,
+  Waves,
+  TreePine,
+  Flame,
+  Zap,
+  Wind,
+  Droplets,
+  Bird,
+  Cat,
+  Music,
+  Heart,
+  Moon,
+  Sun,
+  Coffee,
+  BookOpen,
+  Headphones,
+} from "lucide-react"
 
 interface SoundEffect {
   id: string
   name: string
+  icon: any
+  category: "nature" | "ambient" | "focus" | "sleep" | "meditation" | "comfort"
   description: string
-  frequency: number
-  benefits: string[]
-  icon: React.ComponentType<{ className?: string }>
+  duration?: string
   color: string
+  isLooping: boolean
 }
 
-const soundEffects: SoundEffect[] = [
-  {
-    id: "singing-bowl",
-    name: "Tibetan Singing Bowl",
-    description: "Deep, resonant tones for meditation and grounding",
-    frequency: 256,
-    benefits: ["Stress relief", "Deep meditation", "Chakra balancing"],
-    icon: Circle,
-    color: "from-purple-500 to-indigo-500",
-  },
-  {
-    id: "healing-chimes",
-    name: "Healing Chimes",
-    description: "Crystal-clear tones at the healing frequency",
-    frequency: 528,
-    benefits: ["DNA repair", "Emotional healing", "Love frequency"],
-    icon: Bell,
-    color: "from-green-500 to-teal-500",
-  },
-  {
-    id: "gentle-rain",
-    name: "Gentle Rain",
-    description: "Soothing rainfall sounds for relaxation",
-    frequency: 0, // Pink noise
-    benefits: ["Sleep aid", "Anxiety relief", "Focus enhancement"],
-    icon: Waves,
-    color: "from-blue-500 to-cyan-500",
-  },
-  {
-    id: "wind-chimes",
-    name: "Wind Chimes",
-    description: "Peaceful chimes in the sacred frequency",
-    frequency: 432,
-    benefits: ["Harmony", "Peace", "Spiritual connection"],
-    icon: Wind,
-    color: "from-yellow-500 to-orange-500",
-  },
-  {
-    id: "heartbeat",
-    name: "Heartbeat Rhythm",
-    description: "Comforting heartbeat for inner child work",
-    frequency: 60, // 60 BPM
-    benefits: ["Comfort", "Security", "Age regression support"],
-    icon: Heart,
-    color: "from-pink-500 to-rose-500",
-  },
-  {
-    id: "mindfulness-bell",
-    name: "Mindfulness Bell",
-    description: "Clear bell tones for meditation practice",
-    frequency: 440,
-    benefits: ["Mindfulness", "Present moment", "Meditation anchor"],
-    icon: Zap,
-    color: "from-amber-500 to-yellow-500",
-  },
-]
+interface PlayingSound {
+  id: string
+  volume: number
+  isPlaying: boolean
+  audioContext?: AudioContext
+  source?: AudioBufferSourceNode
+  gainNode?: GainNode
+}
 
-export default function SoundEffects() {
-  const [playingSounds, setPlayingSounds] = useState<Set<string>>(new Set())
-  const [soundVolumes, setSoundVolumes] = useState<Record<string, number>>(
-    soundEffects.reduce((acc, sound) => ({ ...acc, [sound.id]: 50 }), {}),
-  )
-  const [masterVolume, setMasterVolume] = useState([70])
-  const [isMasterMuted, setIsMasterMuted] = useState(false)
-
+export function SoundEffects() {
+  const [playingSounds, setPlayingSounds] = useState<Map<string, PlayingSound>>(new Map())
+  const [masterVolume, setMasterVolume] = useState(70)
+  const [isMuted, setIsMuted] = useState(false)
+  const [currentCategory, setCurrentCategory] = useState("nature")
   const audioContextRef = useRef<AudioContext | null>(null)
-  const oscillatorsRef = useRef<Record<string, OscillatorNode>>({})
-  const gainNodesRef = useRef<Record<string, GainNode>>({})
-  const masterGainRef = useRef<GainNode | null>(null)
+
+  const soundEffects: SoundEffect[] = [
+    {
+      id: "rain",
+      name: "Gentle Rain",
+      icon: Cloud,
+      category: "nature",
+      description: "Soft rainfall for relaxation and focus",
+      color: "from-blue-400 to-blue-600",
+      isLooping: true,
+    },
+    {
+      id: "ocean",
+      name: "Ocean Waves",
+      icon: Waves,
+      category: "nature",
+      description: "Rhythmic ocean waves for deep calm",
+      color: "from-cyan-400 to-blue-500",
+      isLooping: true,
+    },
+    {
+      id: "forest",
+      name: "Forest Ambience",
+      icon: TreePine,
+      category: "nature",
+      description: "Birds chirping in a peaceful forest",
+      color: "from-green-400 to-green-600",
+      isLooping: true,
+    },
+    {
+      id: "fire",
+      name: "Crackling Fire",
+      icon: Flame,
+      category: "ambient",
+      description: "Warm fireplace sounds for coziness",
+      color: "from-orange-400 to-red-500",
+      isLooping: true,
+    },
+    {
+      id: "thunder",
+      name: "Distant Thunder",
+      icon: Zap,
+      category: "nature",
+      description: "Gentle thunder for deep sleep",
+      color: "from-purple-400 to-gray-600",
+      isLooping: true,
+    },
+    {
+      id: "wind",
+      name: "Soft Wind",
+      icon: Wind,
+      category: "nature",
+      description: "Gentle breeze through trees",
+      color: "from-gray-300 to-blue-400",
+      isLooping: true,
+    },
+    {
+      id: "waterfall",
+      name: "Waterfall",
+      icon: Droplets,
+      category: "nature",
+      description: "Cascading water for meditation",
+      color: "from-blue-300 to-cyan-500",
+      isLooping: true,
+    },
+    {
+      id: "birds",
+      name: "Morning Birds",
+      icon: Bird,
+      category: "nature",
+      description: "Cheerful bird songs for awakening",
+      color: "from-yellow-400 to-green-500",
+      isLooping: true,
+    },
+    {
+      id: "purring",
+      name: "Cat Purring",
+      icon: Cat,
+      category: "comfort",
+      description: "Soothing cat purrs for comfort",
+      color: "from-pink-300 to-purple-400",
+      isLooping: true,
+    },
+    {
+      id: "white-noise",
+      name: "White Noise",
+      icon: Volume2,
+      category: "focus",
+      description: "Pure white noise for concentration",
+      color: "from-gray-400 to-gray-600",
+      isLooping: true,
+    },
+    {
+      id: "brown-noise",
+      name: "Brown Noise",
+      icon: Coffee,
+      category: "focus",
+      description: "Deep brown noise for focus",
+      color: "from-amber-600 to-brown-700",
+      isLooping: true,
+    },
+    {
+      id: "pink-noise",
+      name: "Pink Noise",
+      icon: Heart,
+      category: "sleep",
+      description: "Balanced pink noise for sleep",
+      color: "from-pink-400 to-rose-500",
+      isLooping: true,
+    },
+    {
+      id: "night-sounds",
+      name: "Night Ambience",
+      icon: Moon,
+      category: "sleep",
+      description: "Peaceful night sounds for bedtime",
+      color: "from-indigo-500 to-purple-700",
+      isLooping: true,
+    },
+    {
+      id: "morning-sounds",
+      name: "Morning Calm",
+      icon: Sun,
+      category: "meditation",
+      description: "Gentle morning atmosphere",
+      color: "from-yellow-300 to-orange-400",
+      isLooping: true,
+    },
+    {
+      id: "library",
+      name: "Library Ambience",
+      icon: BookOpen,
+      category: "focus",
+      description: "Quiet library atmosphere for studying",
+      color: "from-brown-400 to-amber-600",
+      isLooping: true,
+    },
+    {
+      id: "meditation-bell",
+      name: "Meditation Bell",
+      icon: Music,
+      category: "meditation",
+      description: "Gentle bells for mindfulness",
+      duration: "5 min intervals",
+      color: "from-gold-400 to-yellow-600",
+      isLooping: false,
+    },
+  ]
 
   useEffect(() => {
-    // Initialize Web Audio API
-    const initAudio = () => {
-      if (!audioContextRef.current) {
-        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)()
-        masterGainRef.current = audioContextRef.current.createGain()
-        masterGainRef.current.connect(audioContextRef.current.destination)
-        masterGainRef.current.gain.value = masterVolume[0] / 100
-      }
+    // Initialize audio context
+    if (typeof window !== "undefined") {
+      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)()
     }
-
-    // Initialize on first user interaction
-    const handleFirstInteraction = () => {
-      initAudio()
-      document.removeEventListener("click", handleFirstInteraction)
-      document.removeEventListener("touchstart", handleFirstInteraction)
-    }
-
-    document.addEventListener("click", handleFirstInteraction)
-    document.addEventListener("touchstart", handleFirstInteraction)
 
     return () => {
-      document.removeEventListener("click", handleFirstInteraction)
-      document.removeEventListener("touchstart", handleFirstInteraction)
-
       // Cleanup audio context
       if (audioContextRef.current) {
         audioContextRef.current.close()
@@ -121,334 +220,385 @@ export default function SoundEffects() {
     }
   }, [])
 
-  useEffect(() => {
-    if (masterGainRef.current) {
-      masterGainRef.current.gain.value = isMasterMuted ? 0 : masterVolume[0] / 100
+  const generateSoundBuffer = (type: string, duration = 2): AudioBuffer | null => {
+    if (!audioContextRef.current) return null
+
+    const sampleRate = audioContextRef.current.sampleRate
+    const frameCount = sampleRate * duration
+    const buffer = audioContextRef.current.createBuffer(2, frameCount, sampleRate)
+
+    for (let channel = 0; channel < buffer.numberOfChannels; channel++) {
+      const channelData = buffer.getChannelData(channel)
+
+      for (let i = 0; i < frameCount; i++) {
+        let sample = 0
+
+        switch (type) {
+          case "rain":
+            // Generate rain-like noise
+            sample = (Math.random() * 2 - 1) * 0.3 * Math.sin(i * 0.001)
+            break
+          case "ocean":
+            // Generate wave-like sounds
+            sample = Math.sin(i * 0.01) * 0.4 + (Math.random() * 2 - 1) * 0.1
+            break
+          case "forest":
+            // Generate forest ambience with occasional bird chirps
+            sample = (Math.random() * 2 - 1) * 0.2
+            if (Math.random() < 0.001) {
+              sample += Math.sin(i * 0.1) * 0.3
+            }
+            break
+          case "fire":
+            // Generate crackling fire sounds
+            sample = (Math.random() * 2 - 1) * 0.4
+            if (Math.random() < 0.01) {
+              sample *= 2
+            }
+            break
+          case "white-noise":
+            sample = (Math.random() * 2 - 1) * 0.3
+            break
+          case "brown-noise":
+            // Brown noise (lower frequencies)
+            sample = (Math.random() * 2 - 1) * 0.3
+            if (i > 0) {
+              sample = channelData[i - 1] * 0.99 + sample * 0.01
+            }
+            break
+          case "pink-noise":
+            // Pink noise (balanced frequencies)
+            sample = (Math.random() * 2 - 1) * 0.3
+            if (i > 0) {
+              sample = channelData[i - 1] * 0.9 + sample * 0.1
+            }
+            break
+          case "purring":
+            // Generate purring sound
+            sample = Math.sin(i * 0.05) * 0.3 + (Math.random() * 2 - 1) * 0.1
+            break
+          default:
+            sample = (Math.random() * 2 - 1) * 0.2
+        }
+
+        channelData[i] = sample
+      }
     }
-  }, [masterVolume, isMasterMuted])
 
-  const generateSound = (soundEffect: SoundEffect) => {
-    if (!audioContextRef.current || !masterGainRef.current) return null
+    return buffer
+  }
 
-    const oscillator = audioContextRef.current.createOscillator()
+  const playSound = async (soundId: string) => {
+    if (!audioContextRef.current) return
+
+    const sound = soundEffects.find((s) => s.id === soundId)
+    if (!sound) return
+
+    // Resume audio context if suspended
+    if (audioContextRef.current.state === "suspended") {
+      await audioContextRef.current.resume()
+    }
+
+    const buffer = generateSoundBuffer(soundId, sound.isLooping ? 10 : 5)
+    if (!buffer) return
+
+    const source = audioContextRef.current.createBufferSource()
     const gainNode = audioContextRef.current.createGain()
 
-    if (soundEffect.id === "gentle-rain") {
-      // Generate pink noise for rain
-      const bufferSize = 4096
-      const buffer = audioContextRef.current.createBuffer(1, bufferSize, audioContextRef.current.sampleRate)
-      const output = buffer.getChannelData(0)
+    source.buffer = buffer
+    source.loop = sound.isLooping
+    source.connect(gainNode)
+    gainNode.connect(audioContextRef.current.destination)
 
-      let b0 = 0,
-        b1 = 0,
-        b2 = 0,
-        b3 = 0,
-        b4 = 0,
-        b5 = 0,
-        b6 = 0
-      for (let i = 0; i < bufferSize; i++) {
-        const white = Math.random() * 2 - 1
-        b0 = 0.99886 * b0 + white * 0.0555179
-        b1 = 0.99332 * b1 + white * 0.0750759
-        b2 = 0.969 * b2 + white * 0.153852
-        b3 = 0.8665 * b3 + white * 0.3104856
-        b4 = 0.55 * b4 + white * 0.5329522
-        b5 = -0.7616 * b5 - white * 0.016898
-        output[i] = b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362
-        output[i] *= 0.11
-        b6 = white * 0.115926
-      }
+    const volume = (masterVolume / 100) * (isMuted ? 0 : 1)
+    gainNode.gain.setValueAtTime(volume * 0.5, audioContextRef.current.currentTime)
 
-      const source = audioContextRef.current.createBufferSource()
-      source.buffer = buffer
-      source.loop = true
-      source.connect(gainNode)
-      gainNode.connect(masterGainRef.current)
+    source.start()
 
-      return { oscillator: source as any, gainNode }
-    } else if (soundEffect.id === "heartbeat") {
-      // Generate heartbeat rhythm
-      const createHeartbeat = () => {
-        const now = audioContextRef.current!.currentTime
-        const beat1 = audioContextRef.current!.createOscillator()
-        const beat2 = audioContextRef.current!.createOscillator()
-        const envelope1 = audioContextRef.current!.createGain()
-        const envelope2 = audioContextRef.current!.createGain()
+    const playingSound: PlayingSound = {
+      id: soundId,
+      volume: 50,
+      isPlaying: true,
+      audioContext: audioContextRef.current,
+      source,
+      gainNode,
+    }
 
-        beat1.frequency.value = 60
-        beat2.frequency.value = 80
-        beat1.type = "sine"
-        beat2.type = "sine"
+    setPlayingSounds((prev) => new Map(prev.set(soundId, playingSound)))
+  }
 
-        beat1.connect(envelope1)
-        beat2.connect(envelope2)
-        envelope1.connect(gainNode)
-        envelope2.connect(gainNode)
-
-        // First beat
-        envelope1.gain.setValueAtTime(0, now)
-        envelope1.gain.linearRampToValueAtTime(0.3, now + 0.1)
-        envelope1.gain.exponentialRampToValueAtTime(0.01, now + 0.3)
-
-        // Second beat
-        envelope2.gain.setValueAtTime(0, now + 0.3)
-        envelope2.gain.linearRampToValueAtTime(0.2, now + 0.4)
-        envelope2.gain.exponentialRampToValueAtTime(0.01, now + 0.6)
-
-        beat1.start(now)
-        beat1.stop(now + 0.3)
-        beat2.start(now + 0.3)
-        beat2.stop(now + 0.6)
-
-        setTimeout(createHeartbeat, 1000) // 60 BPM
-      }
-
-      createHeartbeat()
-      gainNode.connect(masterGainRef.current)
-      return { oscillator: null, gainNode }
-    } else {
-      // Generate tone-based sounds
-      oscillator.frequency.value = soundEffect.frequency
-      oscillator.type = soundEffect.id.includes("bell") || soundEffect.id.includes("chime") ? "sine" : "triangle"
-
-      if (soundEffect.id.includes("bowl") || soundEffect.id.includes("bell")) {
-        // Add some modulation for more realistic sound
-        const lfo = audioContextRef.current.createOscillator()
-        const lfoGain = audioContextRef.current.createGain()
-        lfo.frequency.value = 2
-        lfoGain.gain.value = 10
-        lfo.connect(lfoGain)
-        lfoGain.connect(oscillator.frequency)
-        lfo.start()
-      }
-
-      oscillator.connect(gainNode)
-      gainNode.connect(masterGainRef.current)
-      oscillator.start()
-
-      return { oscillator, gainNode }
+  const stopSound = (soundId: string) => {
+    const playingSound = playingSounds.get(soundId)
+    if (playingSound && playingSound.source) {
+      playingSound.source.stop()
+      setPlayingSounds((prev) => {
+        const newMap = new Map(prev)
+        newMap.delete(soundId)
+        return newMap
+      })
     }
   }
 
-  const toggleSound = (soundEffect: SoundEffect) => {
-    const isPlaying = playingSounds.has(soundEffect.id)
-
+  const toggleSound = (soundId: string) => {
+    const isPlaying = playingSounds.has(soundId)
     if (isPlaying) {
-      // Stop sound
-      if (oscillatorsRef.current[soundEffect.id]) {
-        try {
-          oscillatorsRef.current[soundEffect.id].stop()
-        } catch (e) {
-          // Oscillator might already be stopped
-        }
-        delete oscillatorsRef.current[soundEffect.id]
-      }
-      if (gainNodesRef.current[soundEffect.id]) {
-        delete gainNodesRef.current[soundEffect.id]
-      }
+      stopSound(soundId)
+    } else {
+      playSound(soundId)
+    }
+  }
+
+  const adjustSoundVolume = (soundId: string, volume: number) => {
+    const playingSound = playingSounds.get(soundId)
+    if (playingSound && playingSound.gainNode) {
+      const adjustedVolume = (volume / 100) * (masterVolume / 100) * (isMuted ? 0 : 1)
+      playingSound.gainNode.gain.setValueAtTime(adjustedVolume, audioContextRef.current!.currentTime)
 
       setPlayingSounds((prev) => {
-        const newSet = new Set(prev)
-        newSet.delete(soundEffect.id)
-        return newSet
+        const newMap = new Map(prev)
+        const updated = { ...playingSound, volume }
+        newMap.set(soundId, updated)
+        return newMap
       })
-    } else {
-      // Start sound
-      const audioNodes = generateSound(soundEffect)
-      if (audioNodes) {
-        if (audioNodes.oscillator) {
-          oscillatorsRef.current[soundEffect.id] = audioNodes.oscillator
-        }
-        gainNodesRef.current[soundEffect.id] = audioNodes.gainNode
-
-        // Set initial volume
-        audioNodes.gainNode.gain.value = soundVolumes[soundEffect.id] / 100
-
-        setPlayingSounds((prev) => new Set([...prev, soundEffect.id]))
-      }
-    }
-  }
-
-  const handleVolumeChange = (soundId: string, volume: number[]) => {
-    setSoundVolumes((prev) => ({ ...prev, [soundId]: volume[0] }))
-
-    if (gainNodesRef.current[soundId]) {
-      gainNodesRef.current[soundId].gain.value = volume[0] / 100
-    }
-  }
-
-  const handleMasterVolumeChange = (volume: number[]) => {
-    setMasterVolume(volume)
-    if (masterGainRef.current && !isMasterMuted) {
-      masterGainRef.current.gain.value = volume[0] / 100
-    }
-  }
-
-  const toggleMasterMute = () => {
-    setIsMasterMuted(!isMasterMuted)
-    if (masterGainRef.current) {
-      masterGainRef.current.gain.value = isMasterMuted ? masterVolume[0] / 100 : 0
     }
   }
 
   const stopAllSounds = () => {
-    Object.values(oscillatorsRef.current).forEach((oscillator) => {
-      try {
-        oscillator.stop()
-      } catch (e) {
-        // Oscillator might already be stopped
-      }
+    playingSounds.forEach((_, soundId) => {
+      stopSound(soundId)
     })
-
-    oscillatorsRef.current = {}
-    gainNodesRef.current = {}
-    setPlayingSounds(new Set())
   }
 
+  const updateMasterVolume = (volume: number) => {
+    setMasterVolume(volume)
+    playingSounds.forEach((playingSound, soundId) => {
+      if (playingSound.gainNode) {
+        const adjustedVolume = (playingSound.volume / 100) * (volume / 100) * (isMuted ? 0 : 1)
+        playingSound.gainNode.gain.setValueAtTime(adjustedVolume, audioContextRef.current!.currentTime)
+      }
+    })
+  }
+
+  const toggleMute = () => {
+    setIsMuted(!isMuted)
+    playingSounds.forEach((playingSound) => {
+      if (playingSound.gainNode) {
+        const adjustedVolume = (playingSound.volume / 100) * (masterVolume / 100) * (!isMuted ? 0 : 1)
+        playingSound.gainNode.gain.setValueAtTime(adjustedVolume, audioContextRef.current!.currentTime)
+      }
+    })
+  }
+
+  const filteredSounds = soundEffects.filter((sound) => currentCategory === "all" || sound.category === currentCategory)
+
+  const categories = [
+    { id: "all", name: "All Sounds", icon: Headphones },
+    { id: "nature", name: "Nature", icon: TreePine },
+    { id: "ambient", name: "Ambient", icon: Coffee },
+    { id: "focus", name: "Focus", icon: BookOpen },
+    { id: "sleep", name: "Sleep", icon: Moon },
+    { id: "meditation", name: "Meditation", icon: Heart },
+    { id: "comfort", name: "Comfort", icon: Cat },
+  ]
+
   return (
-    <div className="space-y-6">
-      {/* Master Controls */}
-      <Card className="bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Volume2 className="w-5 h-5 text-purple-600" />
-            Sound Healing Studio
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center gap-4">
-            <Button variant="outline" onClick={toggleMasterMute}>
-              {isMasterMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-            </Button>
-            <div className="flex-1">
-              <label className="block text-sm font-medium mb-2">Master Volume</label>
-              <Slider
-                value={isMasterMuted ? [0] : masterVolume}
-                onValueChange={handleMasterVolumeChange}
-                max={100}
-                className="w-full"
-              />
+    <Card className="w-full bg-gradient-to-br from-indigo-50 to-purple-50 border-indigo-200">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full flex items-center justify-center">
+            <Headphones className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+              Sound Effects & Ambience
+            </h2>
+            <p className="text-sm text-gray-600">Create your perfect audio environment</p>
+          </div>
+        </CardTitle>
+      </CardHeader>
+
+      <CardContent className="space-y-6">
+        {/* Master Controls */}
+        <Card className="bg-white/80 border-indigo-200">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Button size="sm" variant="ghost" onClick={toggleMute} className="text-indigo-600 hover:bg-indigo-100">
+                  {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                </Button>
+                <span className="text-sm font-medium text-gray-700">Master Volume</span>
+              </div>
+
+              <div className="flex-1 max-w-xs">
+                <Slider
+                  value={[masterVolume]}
+                  onValueChange={(value) => updateMasterVolume(value[0])}
+                  max={100}
+                  step={1}
+                  className="w-full"
+                />
+              </div>
+
+              <span className="text-sm text-gray-600 w-12">{masterVolume}%</span>
+
+              <Button
+                size="sm"
+                onClick={stopAllSounds}
+                variant="outline"
+                className="border-indigo-300 text-indigo-600 hover:bg-indigo-50 bg-transparent"
+              >
+                <RotateCcw className="w-4 h-4 mr-1" />
+                Stop All
+              </Button>
             </div>
-            <Button variant="outline" onClick={stopAllSounds}>
-              Stop All
-            </Button>
-          </div>
 
-          <div className="text-center">
-            <p className="text-sm text-gray-600">
-              Mix and layer therapeutic sounds for your perfect healing environment
-            </p>
-            <Badge variant="secondary" className="mt-2">
-              {playingSounds.size} sounds playing
-            </Badge>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Sound Effects Grid */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {soundEffects.map((sound) => {
-          const isPlaying = playingSounds.has(sound.id)
-          const IconComponent = sound.icon
-
-          return (
-            <Card
-              key={sound.id}
-              className={`transition-all hover:shadow-lg ${
-                isPlaying
-                  ? "bg-gradient-to-br from-purple-50 to-pink-50 border-purple-300 shadow-md"
-                  : "bg-white/60 backdrop-blur-sm border-gray-200"
-              }`}
-            >
-              <CardContent className="p-4 space-y-4">
-                {/* Sound Header */}
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`w-12 h-12 bg-gradient-to-r ${sound.color} rounded-lg flex items-center justify-center`}
-                  >
-                    <IconComponent className="w-6 h-6 text-white" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900">{sound.name}</h3>
-                    <p className="text-xs text-gray-600">
-                      {sound.frequency > 0 ? `${sound.frequency} Hz` : "Pink Noise"}
-                    </p>
-                  </div>
-                  <Button
-                    onClick={() => toggleSound(sound)}
-                    variant={isPlaying ? "default" : "outline"}
-                    size="sm"
-                    className={isPlaying ? "bg-gradient-to-r from-purple-600 to-pink-600" : ""}
-                  >
-                    {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-                  </Button>
+            {playingSounds.size > 0 && (
+              <div className="mt-4 pt-4 border-t border-indigo-200">
+                <div className="flex items-center gap-2 mb-2">
+                  <Music className="w-4 h-4 text-indigo-600" />
+                  <span className="text-sm font-medium text-gray-700">Now Playing ({playingSounds.size} sounds)</span>
                 </div>
-
-                {/* Description */}
-                <p className="text-sm text-gray-700">{sound.description}</p>
-
-                {/* Volume Control */}
-                {isPlaying && (
-                  <div className="space-y-2">
-                    <label className="block text-xs font-medium text-gray-700">Volume: {soundVolumes[sound.id]}%</label>
-                    <Slider
-                      value={[soundVolumes[sound.id]]}
-                      onValueChange={(value) => handleVolumeChange(sound.id, value)}
-                      max={100}
-                      className="w-full"
-                    />
-                  </div>
-                )}
-
-                {/* Benefits */}
-                <div>
-                  <h4 className="text-xs font-medium text-gray-700 mb-2">Benefits:</h4>
-                  <div className="flex flex-wrap gap-1">
-                    {sound.benefits.map((benefit, index) => (
-                      <Badge key={index} variant="outline" className="text-xs">
-                        {benefit}
+                <div className="flex flex-wrap gap-2">
+                  {Array.from(playingSounds.keys()).map((soundId) => {
+                    const sound = soundEffects.find((s) => s.id === soundId)
+                    return sound ? (
+                      <Badge key={soundId} className="bg-indigo-100 text-indigo-700">
+                        {sound.name}
                       </Badge>
-                    ))}
-                  </div>
+                    ) : null
+                  })}
                 </div>
-              </CardContent>
-            </Card>
-          )
-        })}
-      </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-      {/* Usage Tips */}
-      <Card className="bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200">
-        <CardHeader>
-          <CardTitle className="text-lg text-blue-800">Sound Healing Tips</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3 text-sm text-blue-700">
-          <div className="flex items-start gap-2">
-            <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
-            <p>
-              <strong>Layer sounds:</strong> Combine 2-3 sounds for a richer healing experience
-            </p>
-          </div>
-          <div className="flex items-start gap-2">
-            <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
-            <p>
-              <strong>Use headphones:</strong> For the best therapeutic effect and frequency accuracy
-            </p>
-          </div>
-          <div className="flex items-start gap-2">
-            <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
-            <p>
-              <strong>Start low:</strong> Begin with lower volumes and gradually increase as needed
-            </p>
-          </div>
-          <div className="flex items-start gap-2">
-            <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
-            <p>
-              <strong>Focus on breath:</strong> Let the sounds guide your breathing rhythm
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+        {/* Category Tabs */}
+        <Tabs value={currentCategory} onValueChange={setCurrentCategory}>
+          <TabsList className="grid grid-cols-4 lg:grid-cols-7 bg-white/60">
+            {categories.map((category) => {
+              const IconComponent = category.icon
+              return (
+                <TabsTrigger
+                  key={category.id}
+                  value={category.id}
+                  className="data-[state=active]:bg-indigo-200 text-xs"
+                >
+                  <IconComponent className="w-3 h-3 mr-1" />
+                  {category.name}
+                </TabsTrigger>
+              )
+            })}
+          </TabsList>
+
+          <TabsContent value={currentCategory} className="mt-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {filteredSounds.map((sound) => {
+                const IconComponent = sound.icon
+                const isPlaying = playingSounds.has(sound.id)
+                const playingSound = playingSounds.get(sound.id)
+
+                return (
+                  <Card
+                    key={sound.id}
+                    className={`cursor-pointer transition-all hover:scale-105 hover:shadow-lg bg-white/80 border-2 ${
+                      isPlaying ? "border-indigo-400 shadow-lg" : "border-gray-200"
+                    }`}
+                  >
+                    <CardContent className="p-4">
+                      <div className="text-center space-y-3">
+                        <div
+                          className={`w-16 h-16 bg-gradient-to-r ${sound.color} rounded-full flex items-center justify-center mx-auto ${
+                            isPlaying ? "animate-pulse" : ""
+                          }`}
+                        >
+                          <IconComponent className="w-8 h-8 text-white" />
+                        </div>
+
+                        <div>
+                          <h3 className="font-semibold text-gray-800 text-sm">{sound.name}</h3>
+                          <p className="text-xs text-gray-600 mt-1">{sound.description}</p>
+                          {sound.duration && <p className="text-xs text-indigo-600 mt-1">{sound.duration}</p>}
+                        </div>
+
+                        <Button
+                          size="sm"
+                          onClick={() => toggleSound(sound.id)}
+                          className={`w-full ${
+                            isPlaying
+                              ? "bg-red-500 hover:bg-red-600 text-white"
+                              : "bg-indigo-500 hover:bg-indigo-600 text-white"
+                          }`}
+                        >
+                          {isPlaying ? (
+                            <>
+                              <Pause className="w-3 h-3 mr-1" />
+                              Stop
+                            </>
+                          ) : (
+                            <>
+                              <Play className="w-3 h-3 mr-1" />
+                              Play
+                            </>
+                          )}
+                        </Button>
+
+                        {isPlaying && playingSound && (
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              <Volume2 className="w-3 h-3 text-gray-600" />
+                              <Slider
+                                value={[playingSound.volume]}
+                                onValueChange={(value) => adjustSoundVolume(sound.id, value[0])}
+                                max={100}
+                                step={1}
+                                className="flex-1"
+                              />
+                              <span className="text-xs text-gray-600 w-8">{playingSound.volume}%</span>
+                            </div>
+                          </div>
+                        )}
+
+                        <Badge className="text-xs bg-gray-100 text-gray-700">{sound.category}</Badge>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )
+              })}
+            </div>
+          </TabsContent>
+        </Tabs>
+
+        {/* Usage Tips */}
+        <Card className="bg-white/60 border-indigo-200">
+          <CardContent className="p-4">
+            <h3 className="font-semibold text-indigo-700 mb-3 flex items-center gap-2">
+              <Settings className="w-4 h-4" />
+              Tips for Better Focus & Relaxation
+            </h3>
+            <div className="grid md:grid-cols-2 gap-4 text-sm text-gray-600">
+              <div>
+                <h4 className="font-medium text-gray-800 mb-1">🎧 For Focus:</h4>
+                <p>Try white or brown noise at 30-50% volume. Library ambience works great for studying.</p>
+              </div>
+              <div>
+                <h4 className="font-medium text-gray-800 mb-1">😴 For Sleep:</h4>
+                <p>Rain, ocean waves, or pink noise at low volume (20-30%) can help you drift off.</p>
+              </div>
+              <div>
+                <h4 className="font-medium text-gray-800 mb-1">🧘 For Meditation:</h4>
+                <p>Nature sounds like forest ambience or gentle wind create a peaceful atmosphere.</p>
+              </div>
+              <div>
+                <h4 className="font-medium text-gray-800 mb-1">💆 For Comfort:</h4>
+                <p>Cat purring or crackling fire sounds can provide emotional comfort and reduce anxiety.</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </CardContent>
+    </Card>
   )
 }
+
+export default SoundEffects

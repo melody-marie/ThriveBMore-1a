@@ -1,20 +1,34 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   Heart,
   Star,
   Sparkles,
+  Cloud,
+  Rainbow,
+  Flower,
+  FlowerIcon as Butterfly,
+  Cat,
+  Dog,
+  BeakerIcon as Bear,
+  Rabbit,
+  X,
+  Volume2,
+  VolumeX,
   Palette,
   Book,
   Music,
   Gamepad2,
   Cookie,
-  TurtleIcon as Teddy,
-  Rainbow,
-  Moon,
+  Coffee,
+  Cake,
+  IceCream,
 } from "lucide-react"
 
 interface LittleSpaceProps {
@@ -22,422 +36,715 @@ interface LittleSpaceProps {
   onClose: () => void
 }
 
-export default function LittleSpace({ isVisible, onClose }: LittleSpaceProps) {
-  const [selectedActivity, setSelectedActivity] = useState<string | null>(null)
-  const [mood, setMood] = useState<string>("happy")
+interface ColoringPage {
+  id: string
+  name: string
+  difficulty: "easy" | "medium" | "hard"
+  category: "animals" | "nature" | "fantasy" | "patterns"
+  colors: string[]
+}
+
+interface ComfortItem {
+  id: string
+  name: string
+  icon: any
+  description: string
+  comfort_level: number
+  category: "plushies" | "blankets" | "snacks" | "drinks" | "activities"
+}
+
+interface Story {
+  id: string
+  title: string
+  duration: string
+  category: "bedtime" | "adventure" | "comfort" | "educational"
+  age_range: string
+  preview: string
+}
+
+export function LittleSpace({ isVisible, onClose }: LittleSpaceProps) {
+  const [currentTab, setCurrentTab] = useState("comfort")
+  const [selectedColors, setSelectedColors] = useState<string[]>([])
+  const [currentColoring, setCurrentColoring] = useState<ColoringPage | null>(null)
+  const [soundEnabled, setSoundEnabled] = useState(true)
+  const [currentStory, setCurrentStory] = useState<Story | null>(null)
+  const [comfortItems, setComfortItems] = useState<ComfortItem[]>([])
+
+  const colorPalette = [
+    "#FF6B9D",
+    "#FFB5C1",
+    "#FFC0CB",
+    "#E6E6FA",
+    "#DDA0DD",
+    "#98FB98",
+    "#90EE90",
+    "#87CEEB",
+    "#87CEFA",
+    "#B0E0E6",
+    "#FFE4B5",
+    "#FFEFD5",
+    "#FFF8DC",
+    "#F0E68C",
+    "#FFFFE0",
+    "#FFB347",
+    "#FFA500",
+    "#FF7F50",
+    "#FF6347",
+    "#FF4500",
+  ]
+
+  const coloringPages: ColoringPage[] = [
+    {
+      id: "butterfly",
+      name: "Pretty Butterfly",
+      difficulty: "easy",
+      category: "animals",
+      colors: ["#FF6B9D", "#87CEEB", "#98FB98", "#FFE4B5"],
+    },
+    {
+      id: "flower-garden",
+      name: "Flower Garden",
+      difficulty: "medium",
+      category: "nature",
+      colors: ["#FF6B9D", "#98FB98", "#FFE4B5", "#DDA0DD"],
+    },
+    {
+      id: "teddy-bear",
+      name: "Cuddly Teddy Bear",
+      difficulty: "easy",
+      category: "animals",
+      colors: ["#FFB347", "#FFA500", "#FF6B9D", "#87CEEB"],
+    },
+    {
+      id: "rainbow-castle",
+      name: "Rainbow Castle",
+      difficulty: "hard",
+      category: "fantasy",
+      colors: ["#FF6B9D", "#FFB347", "#98FB98", "#87CEEB", "#DDA0DD"],
+    },
+  ]
+
+  const comfortItemsData: ComfortItem[] = [
+    {
+      id: "teddy",
+      name: "Soft Teddy Bear",
+      icon: Bear,
+      description: "A warm, cuddly friend for comfort",
+      comfort_level: 9,
+      category: "plushies",
+    },
+    {
+      id: "bunny",
+      name: "Fluffy Bunny",
+      icon: Rabbit,
+      description: "Gentle and soft, perfect for snuggles",
+      comfort_level: 8,
+      category: "plushies",
+    },
+    {
+      id: "kitty",
+      name: "Sleepy Kitty",
+      icon: Cat,
+      description: "Purrs softly and brings peace",
+      comfort_level: 9,
+      category: "plushies",
+    },
+    {
+      id: "puppy",
+      name: "Happy Puppy",
+      icon: Dog,
+      description: "Loyal friend who's always happy to see you",
+      comfort_level: 8,
+      category: "plushies",
+    },
+    {
+      id: "warm-milk",
+      name: "Warm Milk",
+      icon: Coffee,
+      description: "Soothing and helps you feel sleepy",
+      comfort_level: 7,
+      category: "drinks",
+    },
+    {
+      id: "cookies",
+      name: "Chocolate Chip Cookies",
+      icon: Cookie,
+      description: "Sweet treats that make everything better",
+      comfort_level: 8,
+      category: "snacks",
+    },
+    {
+      id: "ice-cream",
+      name: "Strawberry Ice Cream",
+      icon: IceCream,
+      description: "Cold and sweet, perfect for happy moments",
+      comfort_level: 9,
+      category: "snacks",
+    },
+    {
+      id: "cake",
+      name: "Birthday Cake",
+      icon: Cake,
+      description: "Special treat for celebrating you",
+      comfort_level: 10,
+      category: "snacks",
+    },
+  ]
+
+  const stories: Story[] = [
+    {
+      id: "sleepy-forest",
+      title: "The Sleepy Forest Friends",
+      duration: "12 minutes",
+      category: "bedtime",
+      age_range: "3-8",
+      preview: "Join the woodland animals as they get ready for bed in their cozy forest home...",
+    },
+    {
+      id: "rainbow-adventure",
+      title: "The Rainbow Adventure",
+      duration: "15 minutes",
+      category: "adventure",
+      age_range: "4-10",
+      preview: "Follow Luna as she discovers a magical rainbow that leads to a land of wonder...",
+    },
+    {
+      id: "gentle-dragon",
+      title: "The Gentle Dragon",
+      duration: "10 minutes",
+      category: "comfort",
+      age_range: "3-7",
+      preview: "Meet Sparkle, a kind dragon who helps children feel brave and loved...",
+    },
+    {
+      id: "counting-stars",
+      title: "Counting Stars",
+      duration: "8 minutes",
+      category: "bedtime",
+      age_range: "2-6",
+      preview: "A peaceful journey through the night sky, counting twinkling stars...",
+    },
+  ]
 
   const activities = [
     {
-      id: "coloring",
-      name: "Digital Coloring",
-      icon: Palette,
-      description: "Peaceful coloring pages with gentle themes",
-      color: "from-pink-400 to-rose-400",
+      id: "breathing",
+      name: "Bubble Breathing",
+      icon: Cloud,
+      description: "Breathe in like you're smelling flowers, breathe out like you're blowing bubbles",
+      duration: "5 minutes",
     },
     {
-      id: "stories",
-      name: "Comfort Stories",
-      icon: Book,
-      description: "Soothing bedtime stories and fairy tales",
-      color: "from-purple-400 to-indigo-400",
+      id: "counting",
+      name: "Counting Game",
+      icon: Star,
+      description: "Count pretty things: stars, flowers, butterflies, and more!",
+      duration: "10 minutes",
+    },
+    {
+      id: "colors",
+      name: "Color Hunt",
+      icon: Rainbow,
+      description: "Find all the colors of the rainbow around you",
+      duration: "15 minutes",
     },
     {
       id: "music",
-      name: "Lullabies & Songs",
+      name: "Gentle Music",
       icon: Music,
-      description: "Gentle music and nursery rhymes",
-      color: "from-blue-400 to-cyan-400",
-    },
-    {
-      id: "games",
-      name: "Simple Games",
-      icon: Gamepad2,
-      description: "Easy, non-competitive games",
-      color: "from-green-400 to-emerald-400",
-    },
-    {
-      id: "snacks",
-      name: "Virtual Snacks",
-      icon: Cookie,
-      description: "Pretend tea parties and treats",
-      color: "from-yellow-400 to-amber-400",
-    },
-    {
-      id: "stuffies",
-      name: "Stuffie Friends",
-      icon: Teddy,
-      description: "Virtual stuffed animal companions",
-      color: "from-orange-400 to-red-400",
+      description: "Listen to soft, calming melodies",
+      duration: "20 minutes",
     },
   ]
 
-  const comfortItems = [
-    { name: "Soft Blankie", emoji: "🧸", comfort: 95 },
-    { name: "Warm Milk", emoji: "🥛", comfort: 88 },
-    { name: "Night Light", emoji: "🌙", comfort: 92 },
-    { name: "Favorite Stuffie", emoji: "🐻", comfort: 98 },
-    { name: "Cozy Socks", emoji: "🧦", comfort: 85 },
-    { name: "Gentle Music", emoji: "🎵", comfort: 90 },
-  ]
+  useEffect(() => {
+    setComfortItems(comfortItemsData)
+  }, [])
+
+  const playComfortSound = () => {
+    if (soundEnabled) {
+      // Create gentle chime sound
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+      const oscillator = audioContext.createOscillator()
+      const gainNode = audioContext.createGain()
+
+      oscillator.connect(gainNode)
+      gainNode.connect(audioContext.destination)
+
+      oscillator.frequency.setValueAtTime(523.25, audioContext.currentTime) // C5
+      oscillator.frequency.setValueAtTime(659.25, audioContext.currentTime + 0.2) // E5
+      oscillator.frequency.setValueAtTime(783.99, audioContext.currentTime + 0.4) // G5
+
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime)
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.6)
+
+      oscillator.start(audioContext.currentTime)
+      oscillator.stop(audioContext.currentTime + 0.6)
+    }
+  }
+
+  const selectComfortItem = (item: ComfortItem) => {
+    playComfortSound()
+    // Add visual feedback or animation here
+  }
 
   if (!isVisible) return null
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden border-4 border-pink-200">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-pink-400 via-purple-400 to-blue-400 p-6 text-white relative">
-          <button
-            onClick={onClose}
-            className="absolute top-4 right-4 w-8 h-8 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center text-white transition-colors text-xl"
-          >
-            ×
-          </button>
+    <div className="fixed inset-0 bg-gradient-to-br from-pink-100 via-purple-100 to-blue-100 z-50 overflow-hidden">
+      {/* Floating decorative elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-10 left-10 text-pink-300 animate-bounce">
+          <Heart className="w-8 h-8" />
+        </div>
+        <div className="absolute top-20 right-20 text-purple-300 animate-pulse">
+          <Star className="w-6 h-6" />
+        </div>
+        <div className="absolute bottom-20 left-20 text-blue-300 animate-bounce" style={{ animationDelay: "1s" }}>
+          <Butterfly className="w-10 h-10" />
+        </div>
+        <div className="absolute bottom-10 right-10 text-yellow-300 animate-pulse" style={{ animationDelay: "2s" }}>
+          <Flower className="w-8 h-8" />
+        </div>
+        <div className="absolute top-1/2 left-5 text-green-300 animate-bounce" style={{ animationDelay: "0.5s" }}>
+          <Rainbow className="w-12 h-12" />
+        </div>
+        <div className="absolute top-1/3 right-5 text-pink-300 animate-pulse" style={{ animationDelay: "1.5s" }}>
+          <Sparkles className="w-6 h-6" />
+        </div>
+      </div>
 
-          <div className="text-center space-y-2">
-            <div className="flex items-center justify-center gap-2">
-              <Heart className="w-8 h-8" />
-              <h1 className="text-4xl font-bold">Little Space</h1>
-              <Sparkles className="w-8 h-8" />
+      {/* Header */}
+      <div className="bg-white/80 backdrop-blur-sm border-b border-pink-200 p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-gradient-to-r from-pink-400 to-purple-400 rounded-full flex items-center justify-center">
+              <Heart className="w-6 h-6 text-white" />
             </div>
-            <p className="text-pink-100 max-w-2xl mx-auto">
-              Your safe, cozy corner for when you need to feel small and cared for 💕
-            </p>
+            <div>
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-pink-500 to-purple-500 bg-clip-text text-transparent">
+                Little Space
+              </h1>
+              <p className="text-sm text-gray-600">Your safe, cozy corner 🧸💕</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setSoundEnabled(!soundEnabled)}
+              className="text-pink-600 hover:bg-pink-100"
+            >
+              {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+            </Button>
+            <Button size="sm" variant="ghost" onClick={onClose} className="text-pink-600 hover:bg-pink-100">
+              <X className="w-4 h-4" />
+            </Button>
           </div>
         </div>
+      </div>
 
-        <div className="p-6 max-h-[calc(90vh-120px)] overflow-y-auto space-y-6">
-          {/* Mood Check */}
-          <Card className="bg-white/60 backdrop-blur-sm border-pink-200">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-pink-700">
-                <Heart className="w-5 h-5" />
-                How are you feeling, little one?
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-4 gap-3">
-                {[
-                  { mood: "happy", emoji: "😊", label: "Happy" },
-                  { mood: "sleepy", emoji: "😴", label: "Sleepy" },
-                  { mood: "sad", emoji: "😢", label: "Sad" },
-                  { mood: "scared", emoji: "😰", label: "Scared" },
-                  { mood: "excited", emoji: "🤗", label: "Excited" },
-                  { mood: "grumpy", emoji: "😤", label: "Grumpy" },
-                  { mood: "shy", emoji: "🙈", label: "Shy" },
-                  { mood: "giggly", emoji: "😄", label: "Giggly" },
-                ].map((moodOption) => (
-                  <Button
-                    key={moodOption.mood}
-                    variant={mood === moodOption.mood ? "default" : "outline"}
-                    onClick={() => setMood(moodOption.mood)}
-                    className={`h-16 flex-col gap-1 ${
-                      mood === moodOption.mood
-                        ? "bg-gradient-to-r from-pink-500 to-purple-500 text-white"
-                        : "border-pink-200 hover:bg-pink-50"
-                    }`}
-                  >
-                    <span className="text-2xl">{moodOption.emoji}</span>
-                    <span className="text-xs">{moodOption.label}</span>
-                  </Button>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+      {/* Main Content */}
+      <div className="flex-1 p-6 overflow-hidden">
+        <Tabs value={currentTab} onValueChange={setCurrentTab} className="h-full flex flex-col">
+          <TabsList className="grid w-full grid-cols-5 bg-white/60 backdrop-blur-sm mb-6">
+            <TabsTrigger value="comfort" className="data-[state=active]:bg-pink-200">
+              <Heart className="w-4 h-4 mr-2" />
+              Comfort
+            </TabsTrigger>
+            <TabsTrigger value="coloring" className="data-[state=active]:bg-purple-200">
+              <Palette className="w-4 h-4 mr-2" />
+              Coloring
+            </TabsTrigger>
+            <TabsTrigger value="stories" className="data-[state=active]:bg-blue-200">
+              <Book className="w-4 h-4 mr-2" />
+              Stories
+            </TabsTrigger>
+            <TabsTrigger value="activities" className="data-[state=active]:bg-green-200">
+              <Gamepad2 className="w-4 h-4 mr-2" />
+              Activities
+            </TabsTrigger>
+            <TabsTrigger value="music" className="data-[state=active]:bg-yellow-200">
+              <Music className="w-4 h-4 mr-2" />
+              Music
+            </TabsTrigger>
+          </TabsList>
 
-          {/* Comfort Level */}
-          <Card className="bg-white/60 backdrop-blur-sm border-purple-200">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-purple-700">
-                <Star className="w-5 h-5" />
-                Comfort Items
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {comfortItems.map((item, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center gap-3 p-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-200 hover:shadow-sm transition-all cursor-pointer"
-                  >
-                    <span className="text-2xl">{item.emoji}</span>
-                    <div className="flex-1">
-                      <p className="font-medium text-sm text-gray-800">{item.name}</p>
-                      <div className="flex items-center gap-1">
-                        <div className="flex">
-                          {[...Array(5)].map((_, i) => (
-                            <Heart
-                              key={i}
-                              className={`w-3 h-3 ${
-                                i < Math.floor(item.comfort / 20) ? "text-pink-500 fill-current" : "text-gray-300"
-                              }`}
-                            />
-                          ))}
-                        </div>
-                        <span className="text-xs text-gray-600">{item.comfort}%</span>
-                      </div>
-                    </div>
+          <div className="flex-1 overflow-hidden">
+            <TabsContent value="comfort" className="h-full">
+              <ScrollArea className="h-full">
+                <div className="space-y-6">
+                  <div className="text-center mb-6">
+                    <h2 className="text-3xl font-bold text-pink-600 mb-2">Comfort Corner</h2>
+                    <p className="text-gray-600">Choose something that makes you feel safe and happy 💕</p>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
 
-          {/* Activities */}
-          <Card className="bg-white/60 backdrop-blur-sm border-blue-200">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-blue-700">
-                <Sparkles className="w-5 h-5" />
-                Fun Activities
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {activities.map((activity) => {
-                  const IconComponent = activity.icon
-                  return (
-                    <Card
-                      key={activity.id}
-                      className={`cursor-pointer transition-all hover:shadow-lg ${
-                        selectedActivity === activity.id ? "ring-2 ring-purple-400 shadow-lg" : "hover:shadow-md"
-                      }`}
-                      onClick={() => setSelectedActivity(activity.id)}
-                    >
-                      <CardContent className="p-4 text-center">
-                        <div
-                          className={`w-16 h-16 bg-gradient-to-r ${activity.color} rounded-full flex items-center justify-center mx-auto mb-3`}
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {comfortItems.map((item) => {
+                      const IconComponent = item.icon
+                      return (
+                        <Card
+                          key={item.id}
+                          className="cursor-pointer transition-all hover:scale-105 hover:shadow-lg bg-white/80 backdrop-blur-sm border-pink-200"
+                          onClick={() => selectComfortItem(item)}
                         >
-                          <IconComponent className="w-8 h-8 text-white" />
-                        </div>
-                        <h3 className="font-semibold text-gray-800 mb-1">{activity.name}</h3>
-                        <p className="text-xs text-gray-600">{activity.description}</p>
-                      </CardContent>
-                    </Card>
-                  )
-                })}
-              </div>
-            </CardContent>
-          </Card>
+                          <CardContent className="p-4 text-center">
+                            <div className="w-16 h-16 bg-gradient-to-r from-pink-300 to-purple-300 rounded-full flex items-center justify-center mx-auto mb-3">
+                              <IconComponent className="w-8 h-8 text-white" />
+                            </div>
+                            <h3 className="font-semibold text-gray-800 mb-1">{item.name}</h3>
+                            <p className="text-xs text-gray-600 mb-2">{item.description}</p>
+                            <div className="flex justify-center">
+                              {[...Array(5)].map((_, i) => (
+                                <Heart
+                                  key={i}
+                                  className={`w-3 h-3 ${
+                                    i < Math.floor(item.comfort_level / 2)
+                                      ? "text-pink-400 fill-current"
+                                      : "text-gray-300"
+                                  }`}
+                                />
+                              ))}
+                            </div>
+                            <Badge className="mt-2 bg-pink-100 text-pink-700 text-xs">{item.category}</Badge>
+                          </CardContent>
+                        </Card>
+                      )
+                    })}
+                  </div>
 
-          {/* Activity Content */}
-          {selectedActivity && (
-            <Card className="bg-gradient-to-br from-yellow-50 to-orange-50 border-yellow-200">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-orange-700">
-                  <Rainbow className="w-5 h-5" />
-                  {activities.find((a) => a.id === selectedActivity)?.name}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {selectedActivity === "coloring" && (
-                  <div className="text-center space-y-4">
-                    <div className="w-full h-64 bg-white rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center">
-                      <div className="text-center space-y-2">
-                        <Palette className="w-12 h-12 text-gray-400 mx-auto" />
-                        <p className="text-gray-600">Coloring canvas would go here</p>
-                        <p className="text-sm text-gray-500">
-                          Pick your favorite colors and create something beautiful!
+                  <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 border border-pink-200">
+                    <h3 className="text-xl font-bold text-pink-600 mb-4 text-center">Gentle Reminders 🌸</h3>
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div className="bg-pink-50 rounded-lg p-4">
+                        <h4 className="font-semibold text-pink-700 mb-2">You are safe here 🛡️</h4>
+                        <p className="text-sm text-gray-600">
+                          This is your special space where you can be exactly who you are.
+                        </p>
+                      </div>
+                      <div className="bg-purple-50 rounded-lg p-4">
+                        <h4 className="font-semibold text-purple-700 mb-2">You are loved 💜</h4>
+                        <p className="text-sm text-gray-600">You deserve kindness, comfort, and all the good things.</p>
+                      </div>
+                      <div className="bg-blue-50 rounded-lg p-4">
+                        <h4 className="font-semibold text-blue-700 mb-2">It's okay to feel little 🧸</h4>
+                        <p className="text-sm text-gray-600">
+                          Your feelings are valid and this is a healthy way to cope.
+                        </p>
+                      </div>
+                      <div className="bg-green-50 rounded-lg p-4">
+                        <h4 className="font-semibold text-green-700 mb-2">Take your time 🌱</h4>
+                        <p className="text-sm text-gray-600">
+                          There's no rush. Stay as long as you need to feel better.
                         </p>
                       </div>
                     </div>
-                    <div className="flex justify-center gap-2">
-                      {["#FF6B9D", "#4ECDC4", "#45B7D1", "#96CEB4", "#FFEAA7", "#DDA0DD"].map((color, index) => (
-                        <div
-                          key={index}
-                          className="w-8 h-8 rounded-full border-2 border-white shadow-md cursor-pointer hover:scale-110 transition-transform"
-                          style={{ backgroundColor: color }}
-                        />
+                  </div>
+                </div>
+              </ScrollArea>
+            </TabsContent>
+
+            <TabsContent value="coloring" className="h-full">
+              <ScrollArea className="h-full">
+                <div className="space-y-6">
+                  <div className="text-center mb-6">
+                    <h2 className="text-3xl font-bold text-purple-600 mb-2">Coloring Pages</h2>
+                    <p className="text-gray-600">Pick your favorite colors and create something beautiful! 🎨</p>
+                  </div>
+
+                  {!currentColoring ? (
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {coloringPages.map((page) => (
+                        <Card
+                          key={page.id}
+                          className="cursor-pointer transition-all hover:scale-105 hover:shadow-lg bg-white/80 backdrop-blur-sm border-purple-200"
+                          onClick={() => setCurrentColoring(page)}
+                        >
+                          <CardContent className="p-6 text-center">
+                            <div className="w-24 h-24 bg-gradient-to-r from-purple-300 to-pink-300 rounded-lg flex items-center justify-center mx-auto mb-4">
+                              <Palette className="w-12 h-12 text-white" />
+                            </div>
+                            <h3 className="font-semibold text-gray-800 mb-2">{page.name}</h3>
+                            <div className="flex justify-center gap-2 mb-3">
+                              {page.colors.slice(0, 4).map((color, index) => (
+                                <div
+                                  key={index}
+                                  className="w-4 h-4 rounded-full border-2 border-white shadow-sm"
+                                  style={{ backgroundColor: color }}
+                                />
+                              ))}
+                            </div>
+                            <Badge
+                              className={`text-xs ${
+                                page.difficulty === "easy"
+                                  ? "bg-green-100 text-green-700"
+                                  : page.difficulty === "medium"
+                                    ? "bg-yellow-100 text-yellow-700"
+                                    : "bg-red-100 text-red-700"
+                              }`}
+                            >
+                              {page.difficulty}
+                            </Badge>
+                          </CardContent>
+                        </Card>
                       ))}
                     </div>
-                  </div>
-                )}
-
-                {selectedActivity === "stories" && (
-                  <div className="space-y-4">
-                    <div className="bg-white/80 rounded-lg p-4 border border-purple-200">
-                      <h4 className="font-semibold text-purple-800 mb-2">🌟 The Brave Little Star</h4>
-                      <p className="text-gray-700 text-sm leading-relaxed">
-                        Once upon a time, in a sky full of twinkling lights, there lived a little star who was afraid to
-                        shine...
-                      </p>
-                      <Button size="sm" className="mt-3 bg-gradient-to-r from-purple-500 to-pink-500">
-                        Read More
-                      </Button>
-                    </div>
-
-                    <div className="bg-white/80 rounded-lg p-4 border border-blue-200">
-                      <h4 className="font-semibold text-blue-800 mb-2">🐰 The Gentle Bunny's Garden</h4>
-                      <p className="text-gray-700 text-sm leading-relaxed">
-                        In a peaceful meadow, a kind bunny tended to the most beautiful garden filled with rainbow
-                        flowers...
-                      </p>
-                      <Button size="sm" className="mt-3 bg-gradient-to-r from-blue-500 to-cyan-500">
-                        Read More
-                      </Button>
-                    </div>
-                  </div>
-                )}
-
-                {selectedActivity === "music" && (
-                  <div className="space-y-4">
-                    <div className="text-center">
-                      <div className="w-24 h-24 bg-gradient-to-r from-pink-400 to-purple-400 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Music className="w-12 h-12 text-white" />
-                      </div>
-                      <p className="text-gray-700 mb-4">Choose a gentle song to listen to:</p>
-                    </div>
-
-                    <div className="space-y-2">
-                      {[
-                        "🎵 Twinkle Twinkle Little Star",
-                        "🎵 You Are My Sunshine",
-                        "🎵 Gentle Rain Sounds",
-                        "🎵 Soft Piano Lullaby",
-                      ].map((song, index) => (
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-2xl font-bold text-purple-600">{currentColoring.name}</h3>
                         <Button
-                          key={index}
+                          onClick={() => setCurrentColoring(null)}
                           variant="outline"
-                          className="w-full justify-start border-pink-200 hover:bg-pink-50 bg-transparent"
+                          className="border-purple-300 text-purple-600"
                         >
-                          {song}
+                          Back to Pages
                         </Button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {selectedActivity === "games" && (
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-white/80 rounded-lg p-4 border border-green-200 text-center">
-                        <div className="text-4xl mb-2">🎯</div>
-                        <h4 className="font-semibold text-green-800">Simple Matching</h4>
-                        <p className="text-sm text-gray-600">Match the cute animals!</p>
                       </div>
 
-                      <div className="bg-white/80 rounded-lg p-4 border border-yellow-200 text-center">
-                        <div className="text-4xl mb-2">🧩</div>
-                        <h4 className="font-semibold text-yellow-800">Easy Puzzles</h4>
-                        <p className="text-sm text-gray-600">Big pieces, gentle fun!</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
+                      <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-purple-200">
+                        <div className="grid lg:grid-cols-3 gap-6">
+                          <div className="lg:col-span-2">
+                            <div className="bg-white rounded-lg p-4 border-2 border-dashed border-purple-300 min-h-96 flex items-center justify-center">
+                              <div className="text-center text-gray-500">
+                                <Palette className="w-16 h-16 mx-auto mb-4 text-purple-300" />
+                                <p>Coloring canvas would appear here</p>
+                                <p className="text-sm mt-2">Interactive coloring functionality coming soon!</p>
+                              </div>
+                            </div>
+                          </div>
 
-                {selectedActivity === "snacks" && (
-                  <div className="space-y-4">
-                    <div className="text-center">
-                      <h4 className="font-semibold text-orange-800 mb-4">🍪 Virtual Tea Party Time! 🫖</h4>
-                    </div>
+                          <div>
+                            <h4 className="font-semibold text-purple-600 mb-4">Color Palette</h4>
+                            <div className="grid grid-cols-4 gap-2 mb-6">
+                              {colorPalette.map((color, index) => (
+                                <button
+                                  key={index}
+                                  className={`w-8 h-8 rounded-full border-2 transition-all hover:scale-110 ${
+                                    selectedColors.includes(color)
+                                      ? "border-purple-500 shadow-lg"
+                                      : "border-white shadow-sm"
+                                  }`}
+                                  style={{ backgroundColor: color }}
+                                  onClick={() => {
+                                    if (selectedColors.includes(color)) {
+                                      setSelectedColors(selectedColors.filter((c) => c !== color))
+                                    } else {
+                                      setSelectedColors([...selectedColors, color])
+                                    }
+                                  }}
+                                />
+                              ))}
+                            </div>
 
-                    <div className="grid grid-cols-3 gap-3">
-                      {[
-                        { item: "🍪", name: "Cookies" },
-                        { item: "🧁", name: "Cupcakes" },
-                        { item: "🍓", name: "Strawberries" },
-                        { item: "🥛", name: "Warm Milk" },
-                        { item: "🫖", name: "Herbal Tea" },
-                        { item: "🍯", name: "Honey" },
-                      ].map((snack, index) => (
-                        <div
-                          key={index}
-                          className="bg-white/80 rounded-lg p-3 border border-orange-200 text-center cursor-pointer hover:shadow-md transition-all"
-                        >
-                          <div className="text-3xl mb-1">{snack.item}</div>
-                          <p className="text-xs text-gray-700">{snack.name}</p>
+                            <div className="space-y-3">
+                              <Button className="w-full bg-purple-500 hover:bg-purple-600 text-white">
+                                <Sparkles className="w-4 h-4 mr-2" />
+                                Magic Fill
+                              </Button>
+                              <Button
+                                variant="outline"
+                                className="w-full border-purple-300 text-purple-600 bg-transparent"
+                              >
+                                Clear All
+                              </Button>
+                              <Button
+                                variant="outline"
+                                className="w-full border-purple-300 text-purple-600 bg-transparent"
+                              >
+                                Save Picture
+                              </Button>
+                            </div>
+                          </div>
                         </div>
-                      ))}
+                      </div>
                     </div>
+                  )}
+                </div>
+              </ScrollArea>
+            </TabsContent>
+
+            <TabsContent value="stories" className="h-full">
+              <ScrollArea className="h-full">
+                <div className="space-y-6">
+                  <div className="text-center mb-6">
+                    <h2 className="text-3xl font-bold text-blue-600 mb-2">Story Time</h2>
+                    <p className="text-gray-600">Cozy up and listen to gentle stories 📚✨</p>
                   </div>
-                )}
 
-                {selectedActivity === "stuffies" && (
-                  <div className="space-y-4">
-                    <div className="text-center">
-                      <h4 className="font-semibold text-red-800 mb-4">🧸 Meet Your Stuffie Friends! 🐻</h4>
-                    </div>
+                  <div className="grid md:grid-cols-2 gap-6">
+                    {stories.map((story) => (
+                      <Card
+                        key={story.id}
+                        className="cursor-pointer transition-all hover:scale-105 hover:shadow-lg bg-white/80 backdrop-blur-sm border-blue-200"
+                        onClick={() => setCurrentStory(story)}
+                      >
+                        <CardHeader>
+                          <CardTitle className="text-blue-700 flex items-center gap-2">
+                            <Book className="w-5 h-5" />
+                            {story.title}
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <p className="text-gray-600 text-sm mb-4">{story.preview}</p>
+                          <div className="flex items-center justify-between text-xs text-gray-500">
+                            <Badge className="bg-blue-100 text-blue-700">{story.category}</Badge>
+                            <span>{story.duration}</span>
+                            <span>Ages {story.age_range}</span>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      {[
-                        { name: "Cuddle Bear", emoji: "🧸", personality: "Gives the best hugs" },
-                        { name: "Sleepy Bunny", emoji: "🐰", personality: "Loves bedtime stories" },
-                        { name: "Happy Puppy", emoji: "🐶", personality: "Always ready to play" },
-                        { name: "Wise Owl", emoji: "🦉", personality: "Listens to all your secrets" },
-                      ].map((stuffie, index) => (
-                        <div
-                          key={index}
-                          className="bg-white/80 rounded-lg p-4 border border-red-200 text-center cursor-pointer hover:shadow-md transition-all"
+                  {currentStory && (
+                    <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-blue-200">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-2xl font-bold text-blue-600">{currentStory.title}</h3>
+                        <Button
+                          onClick={() => setCurrentStory(null)}
+                          variant="outline"
+                          className="border-blue-300 text-blue-600"
                         >
-                          <div className="text-4xl mb-2">{stuffie.emoji}</div>
-                          <h5 className="font-semibold text-red-800">{stuffie.name}</h5>
-                          <p className="text-xs text-gray-600 mt-1">{stuffie.personality}</p>
-                          <Button size="sm" className="mt-2 bg-gradient-to-r from-red-400 to-pink-400">
-                            Say Hi!
+                          Close Story
+                        </Button>
+                      </div>
+
+                      <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-6 text-center">
+                        <Book className="w-16 h-16 mx-auto mb-4 text-blue-400" />
+                        <p className="text-gray-600 mb-4">Audio story player would appear here</p>
+                        <div className="flex justify-center gap-4">
+                          <Button className="bg-blue-500 hover:bg-blue-600 text-white">▶️ Play Story</Button>
+                          <Button variant="outline" className="border-blue-300 text-blue-600 bg-transparent">
+                            ⏸️ Pause
                           </Button>
                         </div>
-                      ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </ScrollArea>
+            </TabsContent>
+
+            <TabsContent value="activities" className="h-full">
+              <ScrollArea className="h-full">
+                <div className="space-y-6">
+                  <div className="text-center mb-6">
+                    <h2 className="text-3xl font-bold text-green-600 mb-2">Gentle Activities</h2>
+                    <p className="text-gray-600">Fun and calming activities to help you feel better 🌈</p>
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-6">
+                    {activities.map((activity) => {
+                      const IconComponent = activity.icon
+                      return (
+                        <Card
+                          key={activity.id}
+                          className="cursor-pointer transition-all hover:scale-105 hover:shadow-lg bg-white/80 backdrop-blur-sm border-green-200"
+                        >
+                          <CardContent className="p-6">
+                            <div className="flex items-start gap-4">
+                              <div className="w-12 h-12 bg-gradient-to-r from-green-400 to-blue-400 rounded-full flex items-center justify-center flex-shrink-0">
+                                <IconComponent className="w-6 h-6 text-white" />
+                              </div>
+                              <div className="flex-1">
+                                <h3 className="font-semibold text-green-700 mb-2">{activity.name}</h3>
+                                <p className="text-gray-600 text-sm mb-3">{activity.description}</p>
+                                <div className="flex items-center justify-between">
+                                  <Badge className="bg-green-100 text-green-700 text-xs">{activity.duration}</Badge>
+                                  <Button size="sm" className="bg-green-500 hover:bg-green-600 text-white">
+                                    Start Activity
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )
+                    })}
+                  </div>
+
+                  <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 border border-green-200">
+                    <h3 className="text-xl font-bold text-green-600 mb-4 text-center">Breathing Exercise 🫧</h3>
+                    <div className="text-center">
+                      <div className="w-32 h-32 bg-gradient-to-r from-green-300 to-blue-300 rounded-full mx-auto mb-6 flex items-center justify-center animate-pulse">
+                        <Cloud className="w-16 h-16 text-white" />
+                      </div>
+                      <p className="text-gray-600 mb-4">
+                        Breathe in slowly through your nose... hold for 3 seconds... breathe out slowly through your
+                        mouth
+                      </p>
+                      <Button className="bg-green-500 hover:bg-green-600 text-white">Start Breathing Exercise</Button>
                     </div>
                   </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
+                </div>
+              </ScrollArea>
+            </TabsContent>
 
-          {/* Bedtime Helper */}
-          <Card className="bg-gradient-to-br from-indigo-50 to-purple-50 border-indigo-200">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-indigo-700">
-                <Moon className="w-5 h-5" />
-                Bedtime Helper
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-indigo-700 text-sm">Getting ready for sleepy time?</p>
+            <TabsContent value="music" className="h-full">
+              <ScrollArea className="h-full">
+                <div className="space-y-6">
+                  <div className="text-center mb-6">
+                    <h2 className="text-3xl font-bold text-yellow-600 mb-2">Gentle Music</h2>
+                    <p className="text-gray-600">Soft melodies to help you relax and feel peaceful 🎵</p>
+                  </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <Button
-                  variant="outline"
-                  className="h-16 flex-col gap-1 border-indigo-200 hover:bg-indigo-50 bg-transparent"
-                >
-                  <Moon className="w-6 h-6 text-indigo-600" />
-                  <span className="text-xs">Night Light</span>
-                </Button>
+                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {[
+                      { name: "Lullaby Dreams", duration: "15:30", mood: "sleepy" },
+                      { name: "Forest Sounds", duration: "20:00", mood: "peaceful" },
+                      { name: "Gentle Piano", duration: "12:45", mood: "calm" },
+                      { name: "Ocean Waves", duration: "25:00", mood: "relaxing" },
+                      { name: "Music Box Melodies", duration: "18:20", mood: "nostalgic" },
+                      { name: "Soft Humming", duration: "10:15", mood: "comforting" },
+                    ].map((track, index) => (
+                      <Card
+                        key={index}
+                        className="cursor-pointer transition-all hover:scale-105 hover:shadow-lg bg-white/80 backdrop-blur-sm border-yellow-200"
+                      >
+                        <CardContent className="p-4 text-center">
+                          <div className="w-16 h-16 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <Music className="w-8 h-8 text-white" />
+                          </div>
+                          <h3 className="font-semibold text-gray-800 mb-1">{track.name}</h3>
+                          <p className="text-xs text-gray-600 mb-2">{track.duration}</p>
+                          <Badge className="bg-yellow-100 text-yellow-700 text-xs mb-3">{track.mood}</Badge>
+                          <Button size="sm" className="w-full bg-yellow-500 hover:bg-yellow-600 text-white">
+                            ▶️ Play
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
 
-                <Button
-                  variant="outline"
-                  className="h-16 flex-col gap-1 border-indigo-200 hover:bg-indigo-50 bg-transparent"
-                >
-                  <Music className="w-6 h-6 text-indigo-600" />
-                  <span className="text-xs">Lullaby</span>
-                </Button>
-
-                <Button
-                  variant="outline"
-                  className="h-16 flex-col gap-1 border-indigo-200 hover:bg-indigo-50 bg-transparent"
-                >
-                  <Book className="w-6 h-6 text-indigo-600" />
-                  <span className="text-xs">Bedtime Story</span>
-                </Button>
-
-                <Button
-                  variant="outline"
-                  className="h-16 flex-col gap-1 border-indigo-200 hover:bg-indigo-50 bg-transparent"
-                >
-                  <Heart className="w-6 h-6 text-indigo-600" />
-                  <span className="text-xs">Goodnight Hug</span>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Footer Message */}
-          <div className="text-center py-4">
-            <p className="text-gray-600 italic">
-              "You are safe, you are loved, you are perfect just as you are, little one." 💕✨
-            </p>
+                  <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 border border-yellow-200">
+                    <h3 className="text-xl font-bold text-yellow-600 mb-4 text-center">Now Playing 🎶</h3>
+                    <div className="text-center">
+                      <div className="w-24 h-24 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full mx-auto mb-4 flex items-center justify-center">
+                        <Music className="w-12 h-12 text-white" />
+                      </div>
+                      <h4 className="font-semibold text-gray-800 mb-2">Select a song to play</h4>
+                      <p className="text-gray-600 text-sm mb-4">Your music will appear here with playback controls</p>
+                      <div className="flex justify-center gap-4">
+                        <Button variant="outline" className="border-yellow-300 text-yellow-600 bg-transparent">
+                          ⏮️ Previous
+                        </Button>
+                        <Button className="bg-yellow-500 hover:bg-yellow-600 text-white">⏸️ Pause</Button>
+                        <Button variant="outline" className="border-yellow-300 text-yellow-600 bg-transparent">
+                          ⏭️ Next
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </ScrollArea>
+            </TabsContent>
           </div>
-        </div>
+        </Tabs>
       </div>
     </div>
   )
 }
+
+export default LittleSpace

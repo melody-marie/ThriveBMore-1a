@@ -1,235 +1,310 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { supabase, type MellysSpotPost, type UserMood } from "@/lib/supabase-client"
-import { botSystem } from "@/lib/bot-system"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Slider } from "@/components/ui/slider"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Heart, Sparkles, Bot, User, Crown, Shield, Zap, MessageCircle, Send, Smile, RefreshCw } from "lucide-react"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import {
+  Users,
+  MessageCircle,
+  Music,
+  Star,
+  Send,
+  Plus,
+  Bookmark,
+  Share,
+  ThumbsUp,
+  Clock,
+  MapPin,
+  Calendar,
+  Phone,
+  ExternalLink,
+  Headphones,
+  Play,
+  Pause,
+  Volume2,
+  SkipBack,
+  SkipForward,
+} from "lucide-react"
 
-interface MellysSpotEnhancedProps {
-  isVisible: boolean
-  onClose: () => void
+interface Post {
+  id: string
+  author: string
+  content: string
+  timestamp: Date
+  likes: number
+  comments: number
+  tags: string[]
+  type: "story" | "resource" | "question" | "celebration" | "support"
+  isAnonymous: boolean
+  mood?: "happy" | "sad" | "anxious" | "excited" | "grateful" | "struggling"
 }
 
-export default function MellysSpotEnhanced({ isVisible, onClose }: MellysSpotEnhancedProps) {
-  const [posts, setPosts] = useState<MellysSpotPost[]>([])
-  const [newPost, setNewPost] = useState("")
-  const [currentMood, setCurrentMood] = useState("")
-  const [energyLevel, setEnergyLevel] = useState([5])
-  const [needsSupport, setNeedsSupport] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const [showMoodCheck, setShowMoodCheck] = useState(false)
+interface Resource {
+  id: string
+  name: string
+  description: string
+  category: "healthcare" | "legal" | "housing" | "community" | "crisis" | "education"
+  contact: {
+    phone?: string
+    email?: string
+    website?: string
+    address?: string
+  }
+  hours?: string
+  cost: "free" | "sliding_scale" | "insurance" | "paid"
+  lgbtq_friendly: boolean
+  trans_specific: boolean
+  verified: boolean
+  rating: number
+  reviews: number
+}
 
-  // Mock data for when Supabase isn't connected
-  const mockPosts: MellysSpotPost[] = [
+interface AudioTrack {
+  id: string
+  title: string
+  artist: string
+  duration: string
+  category: "affirmations" | "meditation" | "music" | "stories" | "nature"
+  mood: string[]
+  plays: number
+  likes: number
+  isPlaying?: boolean
+}
+
+export function MellysSpotEnhanced() {
+  const [currentTab, setCurrentTab] = useState("community")
+  const [posts, setPosts] = useState<Post[]>([])
+  const [newPost, setNewPost] = useState("")
+  const [selectedMood, setSelectedMood] = useState<string>("")
+  const [isAnonymous, setIsAnonymous] = useState(false)
+  const [currentTrack, setCurrentTrack] = useState<AudioTrack | null>(null)
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [selectedFilter, setSelectedFilter] = useState("all")
+
+  const samplePosts: Post[] = [
     {
       id: "1",
-      content: "🌟 Your ancestors whisper: 'You are exactly where you need to be, beloved.' Trust the journey. ✨",
-      post_type: "oracle",
-      bot_name: "Oracle Aziza",
-      created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-      metadata: { wisdom_type: "daily_blessing" },
+      author: "Alex",
+      content:
+        "Just wanted to share that I had my first therapy session today and it went really well! Finding an LGBTQ+ affirming therapist made all the difference. 💜",
+      timestamp: new Date(Date.now() - 1000 * 60 * 30),
+      likes: 12,
+      comments: 5,
+      tags: ["therapy", "mental-health", "lgbtq-affirming"],
+      type: "celebration",
+      isAnonymous: false,
+      mood: "happy",
     },
     {
       id: "2",
+      author: "Anonymous",
       content:
-        "💖 Melly here checking in: How's your heart today, love? Remember, feeling all your feelings is brave work. 🤗",
-      post_type: "care_check",
-      bot_name: "Care Bot Melly",
-      created_at: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
-      metadata: { care_type: "wellness_check" },
+        "Having a rough day with dysphoria. Could use some gentle reminders that this feeling will pass. Thank you for being such a supportive community. 🏳️‍⚧️",
+      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2),
+      likes: 8,
+      comments: 12,
+      tags: ["dysphoria", "support", "transgender"],
+      type: "support",
+      isAnonymous: true,
+      mood: "struggling",
     },
     {
       id: "3",
+      author: "Jordan",
       content:
-        "Just wanted to share some gratitude today. This community has been such a blessing in my healing journey. Thank you all for creating this safe space. 💕",
-      post_type: "user",
-      created_at: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
-      metadata: {},
+        "Does anyone know of good LGBTQ+ friendly housing resources in Baltimore? Looking for something affordable and safe. Any recommendations would be amazing!",
+      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 4),
+      likes: 6,
+      comments: 8,
+      tags: ["housing", "baltimore", "resources"],
+      type: "question",
+      isAnonymous: false,
+      mood: "anxious",
     },
     {
       id: "4",
+      author: "Sam",
       content:
-        "💫 Energy Matchmaker here: I sense 3 beautiful souls with high energy ready to lift others up, and 2 hearts that could use some extra love today. If you're feeling strong, consider reaching out with kindness. Community is medicine. ✨",
-      post_type: "bot",
-      bot_name: "Energy Matchmaker",
-      created_at: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(),
-      metadata: { match_type: "community_support" },
+        "Grateful for this community today. You all remind me that I'm not alone in this journey. Sending love to everyone who needs it. ✨💕",
+      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 6),
+      likes: 15,
+      comments: 7,
+      tags: ["gratitude", "community", "love"],
+      type: "celebration",
+      isAnonymous: false,
+      mood: "grateful",
+    },
+  ]
+
+  const sampleResources: Resource[] = [
+    {
+      id: "1",
+      name: "Chase Brexton Health Care",
+      description:
+        "Comprehensive LGBTQ+ affirming healthcare including primary care, mental health, and transition services",
+      category: "healthcare",
+      contact: {
+        phone: "(410) 837-2050",
+        website: "https://chasebrexton.org",
+        address: "1001 Cathedral St, Baltimore, MD 21201",
+      },
+      hours: "Mon-Fri 8AM-5PM",
+      cost: "insurance",
+      lgbtq_friendly: true,
+      trans_specific: true,
+      verified: true,
+      rating: 4.8,
+      reviews: 127,
     },
     {
-      id: "5",
-      content: "🔮 The universe conspires in your favor today. Your resilience is your superpower, love. 💪🏾✨",
-      post_type: "oracle",
-      bot_name: "Oracle Aziza",
-      created_at: new Date(Date.now() - 10 * 60 * 60 * 1000).toISOString(),
-      metadata: { wisdom_type: "empowerment" },
+      id: "2",
+      name: "FreeState Justice",
+      description: "Legal advocacy organization providing free legal services for LGBTQ+ individuals",
+      category: "legal",
+      contact: {
+        phone: "(410) 625-7861",
+        email: "info@freestatelaw.org",
+        website: "https://freestatelaw.org",
+      },
+      cost: "free",
+      lgbtq_friendly: true,
+      trans_specific: true,
+      verified: true,
+      rating: 4.9,
+      reviews: 89,
+    },
+    {
+      id: "3",
+      name: "Baltimore LGBT Center",
+      description: "Community center offering support groups, events, and resources for LGBTQ+ individuals",
+      category: "community",
+      contact: {
+        phone: "(410) 837-5445",
+        website: "https://baltimoreequality.org",
+        address: "2530 N Charles St, Baltimore, MD 21218",
+      },
+      hours: "Mon-Fri 9AM-6PM, Sat 10AM-4PM",
+      cost: "free",
+      lgbtq_friendly: true,
+      trans_specific: false,
+      verified: true,
+      rating: 4.7,
+      reviews: 156,
+    },
+  ]
+
+  const sampleTracks: AudioTrack[] = [
+    {
+      id: "1",
+      title: "You Are Enough",
+      artist: "Melly's Affirmations",
+      duration: "8:45",
+      category: "affirmations",
+      mood: ["empowering", "self-love"],
+      plays: 1247,
+      likes: 89,
+    },
+    {
+      id: "2",
+      title: "Gentle Breathing for Anxiety",
+      artist: "Healing Voices",
+      duration: "12:30",
+      category: "meditation",
+      mood: ["calming", "anxiety-relief"],
+      plays: 892,
+      likes: 67,
+    },
+    {
+      id: "3",
+      title: "Trans Joy Celebration",
+      artist: "Community Voices",
+      duration: "15:20",
+      category: "music",
+      mood: ["joyful", "celebratory"],
+      plays: 2156,
+      likes: 134,
+    },
+    {
+      id: "4",
+      title: "Forest Rain Sounds",
+      artist: "Nature Sounds",
+      duration: "30:00",
+      category: "nature",
+      mood: ["peaceful", "sleep"],
+      plays: 1534,
+      likes: 78,
     },
   ]
 
   useEffect(() => {
-    if (isVisible) {
-      fetchPosts()
-      // Start bot system when component mounts
-      botSystem.startBots()
-    }
-  }, [isVisible])
+    setPosts(samplePosts)
+  }, [])
 
-  async function fetchPosts() {
-    try {
-      const { data, error } = await supabase
-        .from("mellys_spot_posts")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(20)
-
-      if (error) {
-        console.log("Using mock data while database is being set up")
-        setPosts(mockPosts)
-      } else {
-        setPosts(data || mockPosts)
-      }
-    } catch (error) {
-      console.log("Using mock data while database is being set up")
-      setPosts(mockPosts)
-    }
-  }
-
-  async function submitPost() {
+  const handlePostSubmit = () => {
     if (!newPost.trim()) return
 
-    setIsLoading(true)
-
-    const newPostData: Partial<MellysSpotPost> = {
+    const post: Post = {
+      id: Date.now().toString(),
+      author: isAnonymous ? "Anonymous" : "You",
       content: newPost,
-      post_type: "user",
-      created_at: new Date().toISOString(),
-      metadata: { source: "mellys_spot_enhanced" },
+      timestamp: new Date(),
+      likes: 0,
+      comments: 0,
+      tags: [],
+      type: "story",
+      isAnonymous,
+      mood: selectedMood as any,
     }
 
-    try {
-      const { error } = await supabase.from("mellys_spot_posts").insert([newPostData])
-
-      if (error) {
-        // Add to local state if database isn't ready
-        setPosts((prev) => [
-          {
-            ...newPostData,
-            id: Date.now().toString(),
-          } as MellysSpotPost,
-          ...prev,
-        ])
-      } else {
-        fetchPosts()
-      }
-    } catch (error) {
-      // Add to local state if database isn't ready
-      setPosts((prev) => [
-        {
-          ...newPostData,
-          id: Date.now().toString(),
-        } as MellysSpotPost,
-        ...prev,
-      ])
-    }
-
+    setPosts([post, ...posts])
     setNewPost("")
-    setIsLoading(false)
+    setSelectedMood("")
   }
 
-  async function submitMoodCheck() {
-    if (!currentMood) return
-
-    const moodData: Partial<UserMood> = {
-      user_id: "current-user", // This would be the actual user ID in production
-      mood: currentMood,
-      energy_level: energyLevel[0],
-      needs_support: needsSupport,
-      created_at: new Date().toISOString(),
-    }
-
-    try {
-      await supabase.from("user_moods").insert([moodData])
-      await botSystem.logUserMood("current-user", currentMood, energyLevel[0], needsSupport)
-    } catch (error) {
-      console.log("Mood data will be saved when database is ready")
-    }
-
-    // Add gratitude message to feed
-    const gratitudeMessage = `💖 Thank you for sharing your energy with us, beautiful soul. Your check-in helps us create a more supportive community. Sending you love! ✨`
-
-    try {
-      await supabase.from("mellys_spot_posts").insert([
-        {
-          content: gratitudeMessage,
-          post_type: "bot",
-          bot_name: "Gratitude Bot",
-          metadata: { type: "mood_appreciation", triggered_by: "mood_checkin" },
-        },
-      ])
-    } catch (error) {
-      // Add to local state
-      setPosts((prev) => [
-        {
-          id: Date.now().toString(),
-          content: gratitudeMessage,
-          post_type: "bot",
-          bot_name: "Gratitude Bot",
-          created_at: new Date().toISOString(),
-          metadata: { type: "mood_appreciation" },
-        },
-        ...prev,
-      ])
-    }
-
-    // Reset form
-    setCurrentMood("")
-    setEnergyLevel([5])
-    setNeedsSupport(false)
-    setShowMoodCheck(false)
-
-    // Refresh posts
-    setTimeout(fetchPosts, 1000)
-  }
-
-  function getBotIcon(botName?: string) {
-    switch (botName) {
-      case "Oracle Aziza":
-        return <Crown className="w-4 h-4 text-purple-600" />
-      case "Care Bot Melly":
-        return <Heart className="w-4 h-4 text-pink-600" />
-      case "Energy Matchmaker":
-        return <Zap className="w-4 h-4 text-yellow-600" />
-      case "Community Guardian":
-        return <Shield className="w-4 h-4 text-blue-600" />
-      case "Gratitude Bot":
-        return <Sparkles className="w-4 h-4 text-green-600" />
+  const getMoodColor = (mood?: string) => {
+    switch (mood) {
+      case "happy":
+        return "bg-yellow-100 text-yellow-800"
+      case "sad":
+        return "bg-blue-100 text-blue-800"
+      case "anxious":
+        return "bg-orange-100 text-orange-800"
+      case "excited":
+        return "bg-pink-100 text-pink-800"
+      case "grateful":
+        return "bg-green-100 text-green-800"
+      case "struggling":
+        return "bg-purple-100 text-purple-800"
       default:
-        return <Bot className="w-4 h-4 text-gray-600" />
+        return "bg-gray-100 text-gray-800"
     }
   }
 
-  function getPostTypeColor(postType: string) {
-    switch (postType) {
-      case "oracle":
-        return "bg-gradient-to-r from-purple-50 to-indigo-50 border-purple-200"
-      case "care_check":
-        return "bg-gradient-to-r from-pink-50 to-rose-50 border-pink-200"
-      case "bot":
-        return "bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-200"
+  const getTypeIcon = (type: string) => {
+    switch (type) {
+      case "celebration":
+        return "🎉"
+      case "support":
+        return "🤗"
+      case "question":
+        return "❓"
+      case "resource":
+        return "📋"
+      case "story":
+        return "📝"
       default:
-        return "bg-gradient-to-r from-white to-gray-50 border-gray-200"
+        return "💬"
     }
   }
 
-  function formatTimeAgo(dateString: string) {
+  const formatTimeAgo = (timestamp: Date) => {
     const now = new Date()
-    const postDate = new Date(dateString)
-    const diffInMinutes = Math.floor((now.getTime() - postDate.getTime()) / (1000 * 60))
+    const diffInMinutes = Math.floor((now.getTime() - timestamp.getTime()) / (1000 * 60))
 
     if (diffInMinutes < 1) return "Just now"
     if (diffInMinutes < 60) return `${diffInMinutes}m ago`
@@ -241,240 +316,435 @@ export default function MellysSpotEnhanced({ isVisible, onClose }: MellysSpotEnh
     return `${diffInDays}d ago`
   }
 
-  if (!isVisible) return null
+  const playTrack = (track: AudioTrack) => {
+    setCurrentTrack(track)
+    setIsPlaying(true)
+  }
+
+  const togglePlayPause = () => {
+    setIsPlaying(!isPlaying)
+  }
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 p-6 text-white relative">
-          <button
-            onClick={onClose}
-            className="absolute top-4 right-4 w-8 h-8 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center text-white transition-colors"
-          >
-            ×
-          </button>
-
-          <div className="text-center space-y-2">
-            <div className="flex items-center justify-center gap-2">
-              <Sparkles className="w-8 h-8" />
-              <h1 className="text-4xl font-bold">Melly's Spot</h1>
-              <Sparkles className="w-8 h-8" />
-            </div>
-            <p className="text-purple-100 max-w-2xl mx-auto">
-              Sacred Digital Sanctuary • Bot-Blessed Community Space • Where Hearts Connect ✨
-            </p>
+    <Card className="w-full bg-gradient-to-br from-green-50 to-blue-50 border-green-200">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center">
+            <Users className="w-5 h-5 text-white" />
           </div>
-        </div>
-
-        <div className="p-6 max-h-[calc(90vh-120px)] overflow-y-auto space-y-6">
-          {/* Action Buttons */}
-          <div className="flex justify-center gap-4 flex-wrap">
-            <Button
-              onClick={() => setShowMoodCheck(!showMoodCheck)}
-              variant={showMoodCheck ? "default" : "outline"}
-              className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0"
-            >
-              <Smile className="w-4 h-4 mr-2" />
-              Mood Check-In
-            </Button>
-
-            <Button
-              onClick={fetchPosts}
-              variant="outline"
-              className="border-purple-200 text-purple-600 hover:bg-purple-50 bg-transparent"
-            >
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Refresh Blessings
-            </Button>
+          <div>
+            <h2 className="text-2xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
+              Melly's Spot Enhanced
+            </h2>
+            <p className="text-sm text-gray-600">Community hub for peer support and resources</p>
           </div>
+        </CardTitle>
+      </CardHeader>
 
-          {/* Mood Check-In Form */}
-          {showMoodCheck && (
-            <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-green-700">
-                  <Heart className="w-5 h-5" />
-                  How's Your Energy Today, Beautiful? 💚
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-700">Current Mood:</label>
-                  <Select value={currentMood} onValueChange={setCurrentMood}>
-                    <SelectTrigger className="border-green-200 focus:border-green-400">
-                      <SelectValue placeholder="Select your vibe..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="radiant">✨ Radiant & Glowing</SelectItem>
-                      <SelectItem value="grateful">🙏 Grateful & Blessed</SelectItem>
-                      <SelectItem value="peaceful">🕊️ Peaceful & Centered</SelectItem>
-                      <SelectItem value="creative">🎨 Creative & Inspired</SelectItem>
-                      <SelectItem value="hopeful">🌅 Hopeful & Optimistic</SelectItem>
-                      <SelectItem value="tired">😴 Tired but Holding On</SelectItem>
-                      <SelectItem value="anxious">💭 Anxious & Overwhelmed</SelectItem>
-                      <SelectItem value="sad">💙 Sad & Processing</SelectItem>
-                      <SelectItem value="struggling">🌊 Struggling & Need Support</SelectItem>
-                      <SelectItem value="healing">🌱 Healing & Growing</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+      <CardContent>
+        <Tabs value={currentTab} onValueChange={setCurrentTab}>
+          <TabsList className="grid w-full grid-cols-4 bg-white/60">
+            <TabsTrigger value="community" className="data-[state=active]:bg-green-200">
+              <MessageCircle className="w-4 h-4 mr-2" />
+              Community
+            </TabsTrigger>
+            <TabsTrigger value="resources" className="data-[state=active]:bg-blue-200">
+              <Star className="w-4 h-4 mr-2" />
+              Resources
+            </TabsTrigger>
+            <TabsTrigger value="audio" className="data-[state=active]:bg-purple-200">
+              <Headphones className="w-4 h-4 mr-2" />
+              Audio
+            </TabsTrigger>
+            <TabsTrigger value="events" className="data-[state=active]:bg-pink-200">
+              <Calendar className="w-4 h-4 mr-2" />
+              Events
+            </TabsTrigger>
+          </TabsList>
 
-                <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-700">
-                    Energy Level: {energyLevel[0]}/10
-                  </label>
-                  <Slider
-                    value={energyLevel}
-                    onValueChange={setEnergyLevel}
-                    max={10}
-                    min={1}
-                    step={1}
-                    className="w-full"
+          <TabsContent value="community" className="space-y-6">
+            {/* Post Creation */}
+            <Card className="bg-white/80 border-green-200">
+              <CardContent className="p-4">
+                <div className="space-y-4">
+                  <Textarea
+                    placeholder="Share your story, ask for support, or celebrate with the community..."
+                    value={newPost}
+                    onChange={(e) => setNewPost(e.target.value)}
+                    className="border-green-200 focus:border-green-400"
                   />
-                  <div className="flex justify-between text-xs text-gray-500 mt-1">
-                    <span>Drained</span>
-                    <span>Balanced</span>
-                    <span>Energized</span>
+
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <label className="text-sm text-gray-600">Mood:</label>
+                      <select
+                        value={selectedMood}
+                        onChange={(e) => setSelectedMood(e.target.value)}
+                        className="text-sm border border-green-200 rounded px-2 py-1"
+                      >
+                        <option value="">Select mood</option>
+                        <option value="happy">😊 Happy</option>
+                        <option value="grateful">🙏 Grateful</option>
+                        <option value="excited">🎉 Excited</option>
+                        <option value="anxious">😰 Anxious</option>
+                        <option value="sad">😢 Sad</option>
+                        <option value="struggling">💪 Struggling</option>
+                      </select>
+                    </div>
+
+                    <label className="flex items-center gap-2 text-sm text-gray-600">
+                      <input
+                        type="checkbox"
+                        checked={isAnonymous}
+                        onChange={(e) => setIsAnonymous(e.target.checked)}
+                        className="rounded border-green-300"
+                      />
+                      Post anonymously
+                    </label>
                   </div>
-                </div>
 
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="needsSupport"
-                    checked={needsSupport}
-                    onChange={(e) => setNeedsSupport(e.target.checked)}
-                    className="rounded border-green-300 text-green-600 focus:ring-green-500"
-                  />
-                  <label htmlFor="needsSupport" className="text-sm text-gray-700">
-                    I could use some extra community support today 💕
-                  </label>
+                  <Button
+                    onClick={handlePostSubmit}
+                    disabled={!newPost.trim()}
+                    className="bg-green-500 hover:bg-green-600 text-white"
+                  >
+                    <Send className="w-4 h-4 mr-2" />
+                    Share with Community
+                  </Button>
                 </div>
-
-                <Button
-                  onClick={submitMoodCheck}
-                  disabled={!currentMood}
-                  className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
-                >
-                  Share My Energy ✨
-                </Button>
               </CardContent>
             </Card>
-          )}
 
-          {/* Post Creation */}
-          <Card className="bg-gradient-to-br from-pink-50 to-purple-50 border-pink-200">
-            <CardContent className="pt-6 space-y-4">
-              <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                <MessageCircle className="w-5 h-5 text-pink-600" />
-                Share Something Sacred
-              </h3>
-              <Textarea
-                placeholder="What's on your heart today? Share a blessing, ask for support, celebrate a victory, or just say hello... This is your sacred space. 💖"
-                value={newPost}
-                onChange={(e) => setNewPost(e.target.value)}
-                className="min-h-[100px] resize-none border-pink-200 focus:border-purple-400"
-              />
-              <Button
-                onClick={submitPost}
-                disabled={!newPost.trim() || isLoading}
-                className="w-full bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700"
-              >
-                <Send className="w-4 h-4 mr-2" />
-                {isLoading ? "Blessing the Feed..." : "Bless the Feed"} ✨
-              </Button>
-            </CardContent>
-          </Card>
+            {/* Posts Feed */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-4">
+                <div className="flex-1">
+                  <Input
+                    placeholder="Search posts..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="border-green-200"
+                  />
+                </div>
+                <select
+                  value={selectedFilter}
+                  onChange={(e) => setSelectedFilter(e.target.value)}
+                  className="border border-green-200 rounded px-3 py-2"
+                >
+                  <option value="all">All Posts</option>
+                  <option value="celebration">Celebrations</option>
+                  <option value="support">Support</option>
+                  <option value="question">Questions</option>
+                  <option value="resource">Resources</option>
+                </select>
+              </div>
 
-          {/* Posts Feed */}
-          <div className="space-y-4">
-            <h2 className="text-2xl font-semibold text-center text-gray-800 flex items-center justify-center gap-2">
-              <Sparkles className="w-6 h-6 text-purple-600" />
-              Community Blessings & Bot Wisdom
-              <Sparkles className="w-6 h-6 text-pink-600" />
-            </h2>
+              {posts.map((post) => (
+                <Card key={post.id} className="bg-white/80 border-green-200">
+                  <CardContent className="p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 bg-gradient-to-r from-green-400 to-blue-400 rounded-full flex items-center justify-center flex-shrink-0">
+                        <span className="text-white text-sm font-semibold">
+                          {post.isAnonymous ? "?" : post.author[0]}
+                        </span>
+                      </div>
 
-            {posts.map((post) => (
-              <Card
-                key={post.id}
-                className={`${getPostTypeColor(post.post_type)} transition-all hover:shadow-lg border-l-4`}
-              >
-                <CardContent className="pt-4">
-                  <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0">
-                      {post.post_type === "user" ? (
-                        <div className="w-10 h-10 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center">
-                          <User className="w-5 h-5 text-gray-600" />
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="font-semibold text-gray-800">{post.author}</span>
+                          <span className="text-xs text-gray-500">{formatTimeAgo(post.timestamp)}</span>
+                          <span className="text-sm">{getTypeIcon(post.type)}</span>
+                          {post.mood && <Badge className={`text-xs ${getMoodColor(post.mood)}`}>{post.mood}</Badge>}
                         </div>
-                      ) : (
-                        <div className="w-10 h-10 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full flex items-center justify-center">
-                          {getBotIcon(post.bot_name)}
+
+                        <p className="text-gray-700 mb-3 leading-relaxed">{post.content}</p>
+
+                        {post.tags.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mb-3">
+                            {post.tags.map((tag, index) => (
+                              <Badge key={index} variant="outline" className="text-xs border-green-300 text-green-700">
+                                #{tag}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+
+                        <div className="flex items-center gap-4 text-sm text-gray-500">
+                          <button className="flex items-center gap-1 hover:text-green-600">
+                            <ThumbsUp className="w-4 h-4" />
+                            {post.likes}
+                          </button>
+                          <button className="flex items-center gap-1 hover:text-blue-600">
+                            <MessageCircle className="w-4 h-4" />
+                            {post.comments}
+                          </button>
+                          <button className="flex items-center gap-1 hover:text-purple-600">
+                            <Bookmark className="w-4 h-4" />
+                            Save
+                          </button>
+                          <button className="flex items-center gap-1 hover:text-pink-600">
+                            <Share className="w-4 h-4" />
+                            Share
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="resources" className="space-y-6">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {sampleResources.map((resource) => (
+                <Card key={resource.id} className="bg-white/80 border-blue-200">
+                  <CardHeader>
+                    <CardTitle className="text-blue-700 text-lg">{resource.name}</CardTitle>
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center">
+                        {[...Array(5)].map((_, i) => (
+                          <Star
+                            key={i}
+                            className={`w-3 h-3 ${
+                              i < Math.floor(resource.rating) ? "text-yellow-400 fill-current" : "text-gray-300"
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      <span className="text-xs text-gray-600">({resource.reviews} reviews)</span>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <p className="text-sm text-gray-600">{resource.description}</p>
+
+                    <div className="space-y-2 text-sm">
+                      {resource.contact.phone && (
+                        <div className="flex items-center gap-2">
+                          <Phone className="w-3 h-3 text-blue-600" />
+                          <span>{resource.contact.phone}</span>
+                        </div>
+                      )}
+                      {resource.contact.address && (
+                        <div className="flex items-center gap-2">
+                          <MapPin className="w-3 h-3 text-blue-600" />
+                          <span className="text-xs">{resource.contact.address}</span>
+                        </div>
+                      )}
+                      {resource.hours && (
+                        <div className="flex items-center gap-2">
+                          <Clock className="w-3 h-3 text-blue-600" />
+                          <span className="text-xs">{resource.hours}</span>
                         </div>
                       )}
                     </div>
 
-                    <div className="flex-1 space-y-2">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        {post.bot_name ? (
-                          <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-700">
-                            🤖 {post.bot_name}
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="text-xs border-gray-300 text-gray-600">
-                            👤 Community Member
-                          </Badge>
-                        )}
-                        <span className="text-xs text-gray-500">{formatTimeAgo(post.created_at)}</span>
-                      </div>
+                    <div className="flex flex-wrap gap-1">
+                      <Badge className="text-xs bg-blue-100 text-blue-700">{resource.category}</Badge>
+                      <Badge className="text-xs bg-green-100 text-green-700">{resource.cost}</Badge>
+                      {resource.lgbtq_friendly && (
+                        <Badge className="text-xs bg-rainbow-100 text-rainbow-700">LGBTQ+ Friendly</Badge>
+                      )}
+                      {resource.trans_specific && (
+                        <Badge className="text-xs bg-pink-100 text-pink-700">Trans Specific</Badge>
+                      )}
+                      {resource.verified && <Badge className="text-xs bg-purple-100 text-purple-700">✓ Verified</Badge>}
+                    </div>
 
-                      <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">{post.content}</p>
+                    <div className="flex gap-2">
+                      {resource.contact.website && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="flex-1 border-blue-300 text-blue-600 bg-transparent"
+                        >
+                          <ExternalLink className="w-3 h-3 mr-1" />
+                          Website
+                        </Button>
+                      )}
+                      {resource.contact.phone && (
+                        <Button size="sm" className="flex-1 bg-blue-500 hover:bg-blue-600 text-white">
+                          <Phone className="w-3 h-3 mr-1" />
+                          Call
+                        </Button>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
 
-                      <div className="flex items-center gap-4 pt-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-pink-600 hover:text-pink-700 hover:bg-pink-50"
-                        >
-                          <Heart className="w-4 h-4 mr-1" />
-                          Bless
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-purple-600 hover:text-purple-700 hover:bg-purple-50"
-                        >
-                          <MessageCircle className="w-4 h-4 mr-1" />
-                          Respond
-                        </Button>
+          <TabsContent value="audio" className="space-y-6">
+            {/* Audio Player */}
+            {currentTrack && (
+              <Card className="bg-white/80 border-purple-200">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-4">
+                    <div className="w-16 h-16 bg-gradient-to-r from-purple-400 to-pink-400 rounded-lg flex items-center justify-center">
+                      <Music className="w-8 h-8 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-gray-800">{currentTrack.title}</h3>
+                      <p className="text-sm text-gray-600">{currentTrack.artist}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        {currentTrack.mood.map((mood, index) => (
+                          <Badge key={index} className="text-xs bg-purple-100 text-purple-700">
+                            {mood}
+                          </Badge>
+                        ))}
                       </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button size="sm" variant="ghost">
+                        <SkipBack className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={togglePlayPause}
+                        className="bg-purple-500 hover:bg-purple-600 text-white"
+                      >
+                        {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                      </Button>
+                      <Button size="sm" variant="ghost">
+                        <SkipForward className="w-4 h-4" />
+                      </Button>
+                      <Button size="sm" variant="ghost">
+                        <Volume2 className="w-4 h-4" />
+                      </Button>
                     </div>
                   </div>
                 </CardContent>
               </Card>
-            ))}
-
-            {posts.length === 0 && (
-              <div className="text-center py-12 space-y-4">
-                <div className="text-6xl">✨</div>
-                <h3 className="text-xl font-semibold text-gray-700">Welcome to Melly's Spot!</h3>
-                <p className="text-gray-600 max-w-md mx-auto">
-                  This sacred space is just getting started. Share something beautiful to begin the blessing flow!
-                </p>
-                <div className="text-2xl">💖</div>
-              </div>
             )}
-          </div>
 
-          {/* Footer Message */}
-          <div className="text-center py-6 border-t border-gray-200">
-            <p className="text-gray-600 italic max-w-2xl mx-auto">
-              "In this sacred space, every voice matters, every heart is held, and every soul is seen. You are loved,
-              you are valued, you belong here." 💫🏳️‍⚧️
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
+            {/* Audio Library */}
+            <div className="grid md:grid-cols-2 gap-4">
+              {sampleTracks.map((track) => (
+                <Card
+                  key={track.id}
+                  className="bg-white/80 border-purple-200 cursor-pointer hover:shadow-lg transition-all"
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 bg-gradient-to-r from-purple-400 to-pink-400 rounded-lg flex items-center justify-center">
+                        <Music className="w-6 h-6 text-white" />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-gray-800">{track.title}</h4>
+                        <p className="text-sm text-gray-600">{track.artist}</p>
+                        <div className="flex items-center gap-4 text-xs text-gray-500 mt-1">
+                          <span>{track.duration}</span>
+                          <span>{track.plays} plays</span>
+                          <span>{track.likes} likes</span>
+                        </div>
+                      </div>
+                      <Button
+                        size="sm"
+                        onClick={() => playTrack(track)}
+                        className="bg-purple-500 hover:bg-purple-600 text-white"
+                      >
+                        <Play className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    <div className="flex flex-wrap gap-1 mt-3">
+                      <Badge className="text-xs bg-purple-100 text-purple-700">{track.category}</Badge>
+                      {track.mood.slice(0, 2).map((mood, index) => (
+                        <Badge key={index} className="text-xs bg-pink-100 text-pink-700">
+                          {mood}
+                        </Badge>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="events" className="space-y-6">
+            <div className="grid md:grid-cols-2 gap-6">
+              {[
+                {
+                  title: "Trans Support Group",
+                  date: "Every Tuesday, 7:00 PM",
+                  location: "Baltimore LGBT Center",
+                  description: "Weekly peer support meeting for transgender individuals",
+                  type: "support",
+                },
+                {
+                  title: "Community Organizing Workshop",
+                  date: "Saturday, 2:00 PM",
+                  location: "Virtual & In-Person",
+                  description: "Learn effective organizing strategies for community change",
+                  type: "education",
+                },
+                {
+                  title: "Pride Planning Meeting",
+                  date: "Next Monday, 6:30 PM",
+                  location: "Pride Center of Maryland",
+                  description: "Help plan Baltimore Pride 2024 events and activities",
+                  type: "planning",
+                },
+                {
+                  title: "LGBTQ+ Youth Movie Night",
+                  date: "Friday, 7:00 PM",
+                  location: "Community Center",
+                  description: "Safe space for LGBTQ+ youth to connect and have fun",
+                  type: "social",
+                },
+              ].map((event, index) => (
+                <Card key={index} className="bg-white/80 border-pink-200">
+                  <CardHeader>
+                    <CardTitle className="text-pink-700 flex items-center gap-2">
+                      <Calendar className="w-5 h-5" />
+                      {event.title}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <p className="text-gray-600">{event.description}</p>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-pink-600" />
+                        <span>{event.date}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <MapPin className="w-4 h-4 text-pink-600" />
+                        <span>{event.location}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <Badge className="bg-pink-100 text-pink-700">{event.type}</Badge>
+                      <Button size="sm" className="bg-pink-500 hover:bg-pink-600 text-white">
+                        Join Event
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            <Card className="bg-white/80 border-pink-200">
+              <CardHeader>
+                <CardTitle className="text-pink-700">Create New Event</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Input placeholder="Event title" className="border-pink-200" />
+                <Textarea placeholder="Event description" className="border-pink-200" />
+                <div className="grid md:grid-cols-2 gap-4">
+                  <Input placeholder="Date and time" className="border-pink-200" />
+                  <Input placeholder="Location" className="border-pink-200" />
+                </div>
+                <Button className="w-full bg-pink-500 hover:bg-pink-600 text-white">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Event
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </CardContent>
+    </Card>
   )
 }
+
+export default MellysSpotEnhanced

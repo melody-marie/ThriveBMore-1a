@@ -5,112 +5,350 @@ import type React from "react"
 import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Send, Bot, User, Heart, AlertTriangle, ThumbsUp, ThumbsDown, Sparkles, Shield } from "lucide-react"
-import { omniBotSystem, type Message, type ConversationContext } from "@/lib/omni-bot-system"
+import {
+  Send,
+  Bot,
+  User,
+  Heart,
+  AlertTriangle,
+  Phone,
+  Shield,
+  Clock,
+  X,
+  Minimize2,
+  Maximize2,
+  Volume2,
+  VolumeX,
+  Copy,
+  Moon,
+  Sun,
+} from "lucide-react"
 
-export function OmniBotChat() {
-  const [messages, setMessages] = useState<Message[]>([])
+interface Message {
+  id: string
+  content: string
+  sender: "user" | "bot"
+  timestamp: Date
+  type?: "text" | "crisis" | "resource" | "system"
+  metadata?: {
+    crisisLevel?: number
+    resources?: Array<{
+      name: string
+      phone: string
+      description: string
+    }>
+    sentiment?: "positive" | "negative" | "neutral"
+    topics?: string[]
+  }
+}
+
+interface OmniBotChatProps {
+  isVisible: boolean
+  onClose: () => void
+}
+
+export function OmniBotChat({ isVisible, onClose }: OmniBotChatProps) {
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: "welcome",
+      content:
+        "Hi there! I'm OmniBot, your trauma-informed AI companion. I'm here to listen, support, and help you find resources. How are you feeling today? 💜",
+      sender: "bot",
+      timestamp: new Date(),
+      type: "text",
+      metadata: {
+        sentiment: "positive",
+        topics: ["greeting", "support"],
+      },
+    },
+  ])
   const [inputValue, setInputValue] = useState("")
   const [isTyping, setIsTyping] = useState(false)
-  const [context, setContext] = useState<ConversationContext>({
-    userId: "user-" + Math.random().toString(36).substr(2, 9),
-    sessionId: "session-" + Math.random().toString(36).substr(2, 9),
-    messageHistory: [],
-    identityAffirmations: [],
-    crisisLevel: 0,
-    lastInteraction: new Date(),
-  })
-
-  const scrollAreaRef = useRef<HTMLDivElement>(null)
+  const [isMinimized, setIsMinimized] = useState(false)
+  const [soundEnabled, setSoundEnabled] = useState(true)
+  const [theme, setTheme] = useState<"light" | "dark">("light")
+  const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  }
+
   useEffect(() => {
-    // Add welcome message
-    const welcomeMessage: Message = {
-      id: "welcome-" + Date.now(),
-      content: `Welcome to your safe space! 💜 I'm OmniBot, your AI companion built specifically for the LGBTQ+ community.
+    scrollToBottom()
+  }, [messages])
 
-I'm here to provide culturally competent, trauma-informed support 24/7. Whether you need:
-• Crisis support and safety planning 🆘
-• Identity affirmation and exploration 🏳️‍⚧️
-• Mental health and wellness guidance 🧠
-• Community connection and resources 👥
-• Organizing and activism support ✊
-• Spiritual and healing practices 🙏
+  useEffect(() => {
+    if (isVisible && !isMinimized) {
+      inputRef.current?.focus()
+    }
+  }, [isVisible, isMinimized])
 
-You're in a judgment-free zone where your authentic self is celebrated. What's on your mind today?`,
-      role: "assistant",
+  const playNotificationSound = () => {
+    if (soundEnabled) {
+      // Create a simple notification sound
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+      const oscillator = audioContext.createOscillator()
+      const gainNode = audioContext.createGain()
+
+      oscillator.connect(gainNode)
+      gainNode.connect(audioContext.destination)
+
+      oscillator.frequency.setValueAtTime(800, audioContext.currentTime)
+      oscillator.frequency.setValueAtTime(600, audioContext.currentTime + 0.1)
+
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime)
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2)
+
+      oscillator.start(audioContext.currentTime)
+      oscillator.stop(audioContext.currentTime + 0.2)
+    }
+  }
+
+  const detectCrisisLevel = (message: string): number => {
+    const crisisKeywords = [
+      { words: ["suicide", "kill myself", "end it all", "want to die"], level: 10 },
+      { words: ["self harm", "cutting", "hurt myself", "self-harm"], level: 9 },
+      { words: ["hopeless", "worthless", "can't go on", "no point"], level: 8 },
+      { words: ["panic", "anxiety attack", "can't breathe", "overwhelming"], level: 7 },
+      { words: ["depressed", "sad", "down", "struggling"], level: 5 },
+      { words: ["stressed", "worried", "anxious", "nervous"], level: 3 },
+    ]
+
+    let maxLevel = 0
+    const lowerMessage = message.toLowerCase()
+
+    crisisKeywords.forEach(({ words, level }) => {
+      if (words.some((word) => lowerMessage.includes(word))) {
+        maxLevel = Math.max(maxLevel, level)
+      }
+    })
+
+    return maxLevel
+  }
+
+  const generateBotResponse = (userMessage: string): Message => {
+    const crisisLevel = detectCrisisLevel(userMessage)
+    const lowerMessage = userMessage.toLowerCase()
+
+    // Crisis response
+    if (crisisLevel >= 8) {
+      return {
+        id: Date.now().toString(),
+        content:
+          "I'm really concerned about you right now. Your safety is the most important thing. Please consider reaching out to a crisis hotline immediately. Would you like me to provide some crisis resources? You don't have to go through this alone. 💜",
+        sender: "bot",
+        timestamp: new Date(),
+        type: "crisis",
+        metadata: {
+          crisisLevel,
+          resources: [
+            {
+              name: "National Suicide Prevention Lifeline",
+              phone: "988",
+              description: "24/7 crisis support",
+            },
+            {
+              name: "Crisis Text Line",
+              phone: "Text HOME to 741741",
+              description: "24/7 text-based crisis support",
+            },
+          ],
+          sentiment: "negative",
+          topics: ["crisis", "safety", "resources"],
+        },
+      }
+    }
+
+    // High concern response
+    if (crisisLevel >= 6) {
+      return {
+        id: Date.now().toString(),
+        content:
+          "I hear that you're going through a really difficult time right now. That takes courage to share. Have you been able to talk to anyone about how you're feeling? Sometimes it can help to reach out to a counselor or trusted friend. I'm here to listen and support you. 💙",
+        sender: "bot",
+        timestamp: new Date(),
+        type: "text",
+        metadata: {
+          crisisLevel,
+          sentiment: "negative",
+          topics: ["support", "mental health", "coping"],
+        },
+      }
+    }
+
+    // LGBTQ+ specific support
+    if (
+      lowerMessage.includes("trans") ||
+      lowerMessage.includes("transgender") ||
+      lowerMessage.includes("gender") ||
+      lowerMessage.includes("dysphoria")
+    ) {
+      return {
+        id: Date.now().toString(),
+        content:
+          "Thank you for trusting me with this. Gender identity and expression are deeply personal, and your feelings are completely valid. If you're looking for trans-specific support, I can connect you with resources like Trans Lifeline (877-565-8860) or local LGBTQ+ affirming healthcare providers. How can I best support you right now? 🏳️‍⚧️💜",
+        sender: "bot",
+        timestamp: new Date(),
+        type: "resource",
+        metadata: {
+          crisisLevel,
+          resources: [
+            {
+              name: "Trans Lifeline",
+              phone: "(877) 565-8860",
+              description: "Trans peer support hotline",
+            },
+          ],
+          sentiment: "neutral",
+          topics: ["transgender", "identity", "support", "resources"],
+        },
+      }
+    }
+
+    // Little space / age regression support
+    if (
+      lowerMessage.includes("little") ||
+      lowerMessage.includes("small") ||
+      lowerMessage.includes("regression") ||
+      lowerMessage.includes("child")
+    ) {
+      return {
+        id: Date.now().toString(),
+        content:
+          "It sounds like you might be feeling little or need some comfort right now. That's completely okay and valid! Age regression can be a healthy coping mechanism. Would you like me to guide you to our Little Space area where you can find comfort items, activities, and a safe environment? You deserve to feel safe and cared for. 🧸💕",
+        sender: "bot",
+        timestamp: new Date(),
+        type: "text",
+        metadata: {
+          crisisLevel,
+          sentiment: "positive",
+          topics: ["age regression", "comfort", "coping", "little space"],
+        },
+      }
+    }
+
+    // Anxiety/panic support
+    if (
+      lowerMessage.includes("panic") ||
+      lowerMessage.includes("anxiety") ||
+      lowerMessage.includes("anxious") ||
+      lowerMessage.includes("overwhelmed")
+    ) {
+      return {
+        id: Date.now().toString(),
+        content:
+          "I can hear that you're feeling anxious or overwhelmed right now. Let's try to ground you. Can you try the 5-4-3-2-1 technique with me? Name 5 things you can see, 4 things you can touch, 3 things you can hear, 2 things you can smell, and 1 thing you can taste. Take slow, deep breaths. You're safe right now. 🌸",
+        sender: "bot",
+        timestamp: new Date(),
+        type: "text",
+        metadata: {
+          crisisLevel,
+          sentiment: "neutral",
+          topics: ["anxiety", "grounding", "breathing", "coping"],
+        },
+      }
+    }
+
+    // Baltimore resources
+    if (
+      lowerMessage.includes("baltimore") ||
+      lowerMessage.includes("local") ||
+      lowerMessage.includes("maryland") ||
+      lowerMessage.includes("md")
+    ) {
+      return {
+        id: Date.now().toString(),
+        content:
+          "I can help you find local Baltimore resources! We have some great LGBTQ+ affirming organizations here including Chase Brexton Health Care, Baltimore LGBT Center, and PFLAG Baltimore. Would you like specific contact information or details about their services? I can also help you find other local support groups or events. 🏙️💜",
+        sender: "bot",
+        timestamp: new Date(),
+        type: "resource",
+        metadata: {
+          crisisLevel,
+          resources: [
+            {
+              name: "Chase Brexton Health Care",
+              phone: "(410) 837-2050",
+              description: "LGBTQ+ affirming healthcare",
+            },
+            {
+              name: "Baltimore LGBT Center",
+              phone: "(410) 837-5445",
+              description: "Community programs and support",
+            },
+          ],
+          sentiment: "positive",
+          topics: ["baltimore", "local resources", "healthcare", "community"],
+        },
+      }
+    }
+
+    // Positive/supportive responses
+    if (
+      lowerMessage.includes("better") ||
+      lowerMessage.includes("good") ||
+      lowerMessage.includes("happy") ||
+      lowerMessage.includes("thank")
+    ) {
+      return {
+        id: Date.now().toString(),
+        content:
+          "I'm so glad to hear that! It's wonderful when things feel a bit brighter. Remember that healing isn't linear, and it's okay to have ups and downs. You're doing great by reaching out and taking care of yourself. Is there anything specific that's been helping you feel better? ✨💜",
+        sender: "bot",
+        timestamp: new Date(),
+        type: "text",
+        metadata: {
+          crisisLevel,
+          sentiment: "positive",
+          topics: ["positive", "healing", "self-care", "encouragement"],
+        },
+      }
+    }
+
+    // Default supportive response
+    return {
+      id: Date.now().toString(),
+      content:
+        "Thank you for sharing that with me. I'm here to listen and support you however I can. Your feelings are valid, and you deserve care and compassion. Is there anything specific you'd like to talk about or any way I can help you right now? 💜",
+      sender: "bot",
       timestamp: new Date(),
+      type: "text",
+      metadata: {
+        crisisLevel,
+        sentiment: "neutral",
+        topics: ["support", "validation", "listening"],
+      },
     }
-    setMessages([welcomeMessage])
-  }, [])
-
-  useEffect(() => {
-    if (scrollAreaRef.current) {
-      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight
-    }
-  }, [messages, isTyping])
+  }
 
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return
 
     const userMessage: Message = {
-      id: "user-" + Date.now(),
+      id: Date.now().toString(),
       content: inputValue,
-      role: "user",
+      sender: "user",
       timestamp: new Date(),
+      type: "text",
     }
 
     setMessages((prev) => [...prev, userMessage])
     setInputValue("")
     setIsTyping(true)
 
-    try {
-      // Classify intent
-      const intent = await omniBotSystem.classifyIntent(inputValue)
-
-      // Update context
-      const updatedContext = {
-        ...context,
-        messageHistory: [...context.messageHistory, userMessage],
-        crisisLevel: Math.max(context.crisisLevel, intent.crisisLevel),
-        lastInteraction: new Date(),
-      }
-      setContext(updatedContext)
-
-      // Generate response
-      const response = await omniBotSystem.generateResponse(inputValue, updatedContext, intent)
-
-      // Simulate typing delay
-      await new Promise((resolve) => setTimeout(resolve, 1000 + Math.random() * 2000))
-
-      const botMessage: Message = {
-        id: "bot-" + Date.now(),
-        content: response,
-        role: "assistant",
-        timestamp: new Date(),
-        intent,
-        crisisLevel: intent.crisisLevel,
-        supportProvided: intent.supportNeeded,
-      }
-
-      setMessages((prev) => [...prev, botMessage])
-      setIsTyping(false)
-    } catch (error) {
-      console.error("Error generating response:", error)
-      const errorMessage: Message = {
-        id: "error-" + Date.now(),
-        content:
-          "I'm having trouble responding right now. If you're in crisis, please call 988 or text HOME to 741741. I'll be back shortly. 💜",
-        role: "assistant",
-        timestamp: new Date(),
-      }
-      setMessages((prev) => [...prev, errorMessage])
-      setIsTyping(false)
-    }
+    // Simulate typing delay
+    setTimeout(
+      () => {
+        const botResponse = generateBotResponse(inputValue)
+        setMessages((prev) => [...prev, botResponse])
+        setIsTyping(false)
+        playNotificationSound()
+      },
+      1000 + Math.random() * 2000,
+    )
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -120,195 +358,216 @@ You're in a judgment-free zone where your authentic self is celebrated. What's o
     }
   }
 
-  const handleFeedback = async (messageId: string, feedback: "positive" | "negative") => {
-    await omniBotSystem.learnFromFeedback(messageId, feedback)
-    // You could show a toast notification here
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
   }
 
-  const getCrisisLevelColor = (level: number) => {
-    if (level >= 7) return "bg-red-500"
-    if (level >= 4) return "bg-orange-500"
-    if (level >= 2) return "bg-yellow-500"
-    return "bg-green-500"
+  const copyMessage = (content: string) => {
+    navigator.clipboard.writeText(content)
   }
 
-  const getCrisisLevelText = (level: number) => {
-    if (level >= 7) return "High Crisis"
-    if (level >= 4) return "Moderate Concern"
-    if (level >= 2) return "Mild Distress"
-    return "Stable"
-  }
+  if (!isVisible) return null
 
   return (
-    <div className="flex flex-col h-full bg-gradient-to-br from-purple-50 to-pink-50">
-      {/* Chat Header */}
-      <div className="p-4 bg-white border-b border-gray-200">
-        <div className="flex items-center justify-between">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div
+        className={`bg-white rounded-2xl shadow-2xl w-full max-w-4xl h-[80vh] flex flex-col overflow-hidden border-2 border-purple-200 ${isMinimized ? "h-16" : ""}`}
+      >
+        {/* Header */}
+        <div className="bg-gradient-to-r from-purple-500 to-pink-500 p-4 text-white flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-              <Bot className="w-6 h-6 text-white" />
+            <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+              <Bot className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="font-semibold text-gray-900">OmniBot</h3>
-              <p className="text-sm text-gray-500">Your AI Liberation Companion</p>
+              <h2 className="text-xl font-bold">OmniBot</h2>
+              <p className="text-purple-100 text-sm">Trauma-informed AI companion</p>
             </div>
           </div>
+
           <div className="flex items-center gap-2">
-            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-              <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-              Online
-            </Badge>
-            {context.crisisLevel > 0 && (
-              <Badge className={`text-white ${getCrisisLevelColor(context.crisisLevel)}`}>
-                <AlertTriangle className="w-3 h-3 mr-1" />
-                {getCrisisLevelText(context.crisisLevel)}
-              </Badge>
-            )}
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setSoundEnabled(!soundEnabled)}
+              className="text-white hover:bg-white/20"
+            >
+              {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+              className="text-white hover:bg-white/20"
+            >
+              {theme === "light" ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setIsMinimized(!isMinimized)}
+              className="text-white hover:bg-white/20"
+            >
+              {isMinimized ? <Maximize2 className="w-4 h-4" /> : <Minimize2 className="w-4 h-4" />}
+            </Button>
+            <Button size="sm" variant="ghost" onClick={onClose} className="text-white hover:bg-white/20">
+              <X className="w-4 h-4" />
+            </Button>
           </div>
         </div>
-      </div>
 
-      {/* Chat Messages */}
-      <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
-        <div className="space-y-4">
-          {messages.map((message) => (
-            <div key={message.id} className={`flex gap-3 ${message.role === "user" ? "justify-end" : "justify-start"}`}>
-              {message.role === "assistant" && (
-                <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center flex-shrink-0">
-                  <Bot className="w-4 h-4 text-white" />
-                </div>
-              )}
+        {!isMinimized && (
+          <>
+            {/* Messages */}
+            <ScrollArea className="flex-1 p-4">
+              <div className="space-y-4">
+                {messages.map((message) => (
+                  <div
+                    key={message.id}
+                    className={`flex gap-3 ${message.sender === "user" ? "justify-end" : "justify-start"}`}
+                  >
+                    {message.sender === "bot" && (
+                      <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center flex-shrink-0">
+                        <Bot className="w-4 h-4 text-white" />
+                      </div>
+                    )}
 
-              <div className={`max-w-[80%] ${message.role === "user" ? "order-first" : ""}`}>
-                <Card
-                  className={`${
-                    message.role === "user"
-                      ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white border-0"
-                      : "bg-white border-gray-200"
-                  }`}
-                >
-                  <CardContent className="p-3">
-                    <div className="whitespace-pre-wrap text-sm leading-relaxed">{message.content}</div>
+                    <div className={`max-w-[70%] ${message.sender === "user" ? "order-2" : ""}`}>
+                      <div
+                        className={`rounded-2xl p-3 ${
+                          message.sender === "user"
+                            ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white"
+                            : message.type === "crisis"
+                              ? "bg-red-50 border border-red-200 text-red-800"
+                              : "bg-gray-100 text-gray-800"
+                        }`}
+                      >
+                        <p className="text-sm leading-relaxed">{message.content}</p>
 
-                    {/* Intent Classification Display */}
-                    {message.intent && message.role === "assistant" && (
-                      <div className="mt-3 pt-3 border-t border-gray-100">
-                        <div className="flex flex-wrap gap-2 mb-2">
-                          <Badge variant="outline" className="text-xs">
-                            <Sparkles className="w-3 h-3 mr-1" />
-                            {message.intent.primary.replace("_", " ")}
-                          </Badge>
-                          <Badge variant="outline" className="text-xs">
-                            {Math.round(message.intent.confidence * 100)}% confidence
-                          </Badge>
-                          {message.crisisLevel && message.crisisLevel > 0 && (
-                            <Badge className={`text-xs text-white ${getCrisisLevelColor(message.crisisLevel)}`}>
-                              <Shield className="w-3 h-3 mr-1" />
-                              Crisis Level: {message.crisisLevel}
-                            </Badge>
-                          )}
-                        </div>
-
-                        {message.supportProvided && message.supportProvided.length > 0 && (
-                          <div className="text-xs text-gray-500">
-                            <strong>Support provided:</strong> {message.supportProvided.join(", ").replace(/_/g, " ")}
+                        {message.metadata?.resources && (
+                          <div className="mt-3 space-y-2">
+                            {message.metadata.resources.map((resource, index) => (
+                              <div key={index} className="bg-white/90 rounded-lg p-2 border">
+                                <div className="flex items-center justify-between">
+                                  <div>
+                                    <h4 className="font-semibold text-xs text-gray-800">{resource.name}</h4>
+                                    <p className="text-xs text-gray-600">{resource.description}</p>
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    <Phone className="w-3 h-3 text-gray-600" />
+                                    <span className="text-xs font-mono text-gray-800">{resource.phone}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
                           </div>
                         )}
                       </div>
-                    )}
-                  </CardContent>
-                </Card>
 
-                {/* Message Actions */}
-                {message.role === "assistant" && (
-                  <div className="flex items-center gap-2 mt-2 ml-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleFeedback(message.id, "positive")}
-                      className="h-6 px-2 text-gray-400 hover:text-green-600"
-                    >
-                      <ThumbsUp className="w-3 h-3" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleFeedback(message.id, "negative")}
-                      className="h-6 px-2 text-gray-400 hover:text-red-600"
-                    >
-                      <ThumbsDown className="w-3 h-3" />
-                    </Button>
-                    <span className="text-xs text-gray-400">
-                      {message.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                    </span>
+                      <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
+                        <span>{formatTime(message.timestamp)}</span>
+                        {message.metadata?.crisisLevel && message.metadata.crisisLevel > 5 && (
+                          <Badge variant="outline" className="text-xs border-red-300 text-red-600">
+                            <AlertTriangle className="w-3 h-3 mr-1" />
+                            High concern
+                          </Badge>
+                        )}
+                        {message.metadata?.sentiment && (
+                          <Badge variant="outline" className="text-xs">
+                            {message.metadata.sentiment === "positive"
+                              ? "😊"
+                              : message.metadata.sentiment === "negative"
+                                ? "😔"
+                                : "😐"}
+                          </Badge>
+                        )}
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => copyMessage(message.content)}
+                          className="h-4 w-4 p-0 hover:bg-gray-200"
+                        >
+                          <Copy className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    {message.sender === "user" && (
+                      <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex items-center justify-center flex-shrink-0">
+                        <User className="w-4 h-4 text-white" />
+                      </div>
+                    )}
+                  </div>
+                ))}
+
+                {isTyping && (
+                  <div className="flex gap-3 justify-start">
+                    <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
+                      <Bot className="w-4 h-4 text-white" />
+                    </div>
+                    <div className="bg-gray-100 rounded-2xl p-3">
+                      <div className="flex gap-1">
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                        <div
+                          className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                          style={{ animationDelay: "0.1s" }}
+                        ></div>
+                        <div
+                          className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                          style={{ animationDelay: "0.2s" }}
+                        ></div>
+                      </div>
+                    </div>
                   </div>
                 )}
+
+                <div ref={messagesEndRef} />
+              </div>
+            </ScrollArea>
+
+            {/* Input */}
+            <div className="p-4 border-t border-gray-200">
+              <div className="flex gap-2">
+                <Input
+                  ref={inputRef}
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder="Share what's on your mind... I'm here to listen 💜"
+                  className="flex-1 border-purple-200 focus:border-purple-400"
+                />
+                <Button
+                  onClick={handleSendMessage}
+                  disabled={!inputValue.trim() || isTyping}
+                  className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+                >
+                  <Send className="w-4 h-4" />
+                </Button>
               </div>
 
-              {message.role === "user" && (
-                <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center flex-shrink-0">
-                  <User className="w-4 h-4 text-white" />
+              <div className="flex items-center justify-between mt-2 text-xs text-gray-500">
+                <div className="flex items-center gap-4">
+                  <span className="flex items-center gap-1">
+                    <Shield className="w-3 h-3" />
+                    Trauma-informed
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Heart className="w-3 h-3" />
+                    LGBTQ+ affirming
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Clock className="w-3 h-3" />
+                    24/7 available
+                  </span>
                 </div>
-              )}
-            </div>
-          ))}
-
-          {/* Typing Indicator */}
-          {isTyping && (
-            <div className="flex gap-3 justify-start">
-              <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-                <Bot className="w-4 h-4 text-white" />
+                <span>Press Enter to send</span>
               </div>
-              <Card className="bg-white border-gray-200">
-                <CardContent className="p-3">
-                  <div className="flex items-center gap-1">
-                    <div className="flex gap-1">
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                      <div
-                        className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                        style={{ animationDelay: "0.1s" }}
-                      ></div>
-                      <div
-                        className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                        style={{ animationDelay: "0.2s" }}
-                      ></div>
-                    </div>
-                    <span className="text-sm text-gray-500 ml-2">OmniBot is typing...</span>
-                  </div>
-                </CardContent>
-              </Card>
             </div>
-          )}
-        </div>
-      </ScrollArea>
-
-      {/* Input Area */}
-      <div className="p-4 bg-white border-t border-gray-200">
-        <div className="flex gap-2">
-          <Input
-            ref={inputRef}
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="Share what's on your mind... I'm here to listen 💜"
-            className="flex-1 border-gray-300 focus:border-purple-500 focus:ring-purple-500"
-            disabled={isTyping}
-          />
-          <Button
-            onClick={handleSendMessage}
-            disabled={!inputValue.trim() || isTyping}
-            className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
-          >
-            <Send className="w-4 h-4" />
-          </Button>
-        </div>
-
-        {/* Safety Notice */}
-        <div className="mt-2 text-xs text-gray-500 text-center">
-          <Heart className="w-3 h-3 inline mr-1" />
-          This is a safe, judgment-free space. In crisis? Call 988 or text HOME to 741741
-        </div>
+          </>
+        )}
       </div>
     </div>
   )
 }
+
+export default OmniBotChat

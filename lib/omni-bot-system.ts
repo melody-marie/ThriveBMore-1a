@@ -1,32 +1,11 @@
-export interface BotPersonality {
-  empathy: number // 0-100
-  professionalism: number // 0-100
-  creativity: number // 0-100
-  wit: number // 0-100
-  culturalCompetency: number // 0-100
-  traumaInformed: number // 0-100
-}
-
-export interface ConversationContext {
-  userId: string
-  sessionId: string
-  messageHistory: Message[]
-  currentMood?: string
-  identityAffirmations: string[]
-  crisisLevel: number // 0-10
-  lastInteraction: Date
-  preferredPronouns?: string
-  culturalBackground?: string[]
-  supportNeeds?: string[]
-}
+"use client"
 
 export interface Message {
   id: string
   content: string
   role: "user" | "assistant"
   timestamp: Date
-  intent?: IntentClassification
-  metadata?: Record<string, any>
+  intent?: string
   crisisLevel?: number
   supportProvided?: string[]
 }
@@ -41,855 +20,580 @@ export interface IntentClassification {
   traumaIndicators?: string[]
 }
 
-export interface CrisisResource {
-  name: string
-  phone?: string
-  text?: string
-  website?: string
-  available: string
-  specialization: string[]
-  location?: string
-  lgbtqFriendly: boolean
+export interface BotMessage {
+  id: string
+  content: string
+  type: "user" | "bot"
+  timestamp: Date
+  metadata?: {
+    intent?: string
+    confidence?: number
+    resources?: Resource[]
+    crisis_level?: number
+    cultural_context?: string[]
+    follow_up_actions?: string[]
+  }
 }
 
-export class OmniBotSystem {
-  private personality: BotPersonality = {
-    empathy: 95,
-    professionalism: 85,
-    creativity: 90,
-    wit: 75,
-    culturalCompetency: 95,
-    traumaInformed: 98,
+export interface Resource {
+  id: string
+  name: string
+  description: string
+  type: "crisis" | "healthcare" | "legal" | "housing" | "community" | "education"
+  contact_info: {
+    phone?: string
+    email?: string
+    website?: string
+    address?: string
   }
+  availability: string
+  lgbtq_friendly: boolean
+  trans_specific: boolean
+  cultural_competency: string[]
+  cost: "free" | "sliding_scale" | "insurance" | "paid"
+  languages: string[]
+}
 
-  private crisisKeywords = [
+export interface ConversationContext {
+  userId?: string
+  sessionId: string
+  messageHistory: Message[]
+  identityAffirmations: string[]
+  crisisLevel: number
+  lastInteraction: Date
+  preferredPronouns?: string
+  culturalBackground?: string[]
+  currentMood?: string
+  supportNeeds?: string[]
+  conversation_history: BotMessage[]
+  user_profile?: {
+    pronouns?: string
+    identity?: string[]
+    location?: string
+    crisis_history?: boolean
+    preferred_language?: string
+  }
+  active_resources: Resource[]
+}
+
+export interface BotPersonality {
+  empathy: number // 1-10
+  professionalism: number // 1-10
+  creativity: number // 1-10
+  wit: number // 1-10
+  culturalCompetency: number // 1-10
+  traumaInformed: number // 1-10
+}
+
+// Crisis keywords and phrases with cultural context
+const CRISIS_INDICATORS = {
+  immediate: [
     "suicide",
     "kill myself",
     "end it all",
     "not worth living",
+    "better off dead",
     "hurt myself",
     "self harm",
     "cutting",
     "overdose",
-    "jump off",
-    "hanging",
-    "gun",
-    "razor",
     "pills",
-    "die",
-    "death",
+    "can't go on",
+    "no point",
     "hopeless",
     "worthless",
-    "can't go on",
-    "give up",
-    "no point",
-    "tired of living",
-    "want to disappear",
-    "better off dead",
-  ]
+  ],
+  high: [
+    "depressed",
+    "depression",
+    "anxiety",
+    "panic",
+    "scared",
+    "afraid",
+    "alone",
+    "isolated",
+    "rejected",
+    "kicked out",
+    "homeless",
+    "family disowned",
+    "lost job",
+    "discrimination",
+    "harassment",
+  ],
+  medium: [
+    "struggling",
+    "difficult",
+    "hard time",
+    "stressed",
+    "overwhelmed",
+    "confused",
+    "questioning",
+    "unsure",
+    "worried",
+    "concerned",
+  ],
+}
 
-  private identityAffirmations = [
-    "Your identity is valid and beautiful 🏳️‍⚧️",
-    "You belong in this world exactly as you are 💖",
-    "Your existence makes the world more colorful 🌈",
-    "You are worthy of love and respect ✨",
-    "Your journey is unique and valuable 🦋",
-    "You are enough, just as you are 💜",
-    "Your voice matters and deserves to be heard 📢",
-    "You are loved by your community 🤗",
-    "Your resilience is inspiring 💪",
-    "You deserve joy and happiness 😊",
-  ]
+// LGBTQ+ and cultural context keywords
+const CULTURAL_CONTEXTS = {
+  transgender: ["trans", "transgender", "transition", "hrt", "hormones", "surgery", "dysphoria", "deadname"],
+  black_lgbtq: ["black", "african american", "poc", "racism", "intersectional", "church", "family rejection"],
+  youth: ["teen", "teenager", "young", "school", "parents", "family", "coming out"],
+  religious: ["church", "faith", "religion", "christian", "muslim", "jewish", "spiritual", "god"],
+  family: ["family", "parents", "mom", "dad", "siblings", "relatives", "home", "kicked out"],
+  workplace: ["work", "job", "employer", "coworkers", "discrimination", "harassment", "fired"],
+}
 
-  private lgbtqResources: { crisis: CrisisResource[]; local: CrisisResource[]; national: CrisisResource[] } = {
-    crisis: [
-      {
-        name: "Trans Lifeline",
-        phone: "877-565-8860",
-        available: "24/7",
-        specialization: ["transgender", "crisis", "peer support"],
-        lgbtqFriendly: true,
-      },
-      {
-        name: "LGBT National Hotline",
-        phone: "1-888-843-4564",
-        available: "Daily 4pm-12am ET",
-        specialization: ["lgbtq", "crisis", "counseling"],
-        lgbtqFriendly: true,
-      },
-      {
-        name: "Crisis Text Line",
-        text: "HOME to 741741",
-        available: "24/7",
-        specialization: ["crisis", "text support", "all ages"],
-        lgbtqFriendly: true,
-      },
-      {
-        name: "National Suicide Prevention Lifeline",
-        phone: "988",
-        available: "24/7",
-        specialization: ["suicide prevention", "crisis", "mental health"],
-        lgbtqFriendly: true,
-      },
-    ],
-    local: [
-      {
-        name: "LGBTQ Health Resource Center of Chase Brexton",
-        location: "Baltimore, MD",
-        website: "https://chasebrexton.org",
-        available: "Business hours",
-        specialization: ["healthcare", "mental health", "transgender care"],
-        lgbtqFriendly: true,
-      },
-      {
-        name: "FreeState Justice",
-        location: "Baltimore, MD",
-        website: "https://freestate-justice.org",
-        available: "Business hours",
-        specialization: ["legal advocacy", "transgender rights", "discrimination"],
-        lgbtqFriendly: true,
-      },
-      {
-        name: "Baltimore Safe Haven",
-        location: "Baltimore, MD",
-        available: "24/7",
-        specialization: ["emergency shelter", "lgbtq youth", "crisis housing"],
-        lgbtqFriendly: true,
-      },
-    ],
-    national: [
-      {
-        name: "The Trevor Project",
-        phone: "1-866-488-7386",
-        text: "START to 678-678",
-        available: "24/7",
-        specialization: ["lgbtq youth", "suicide prevention", "crisis"],
-        lgbtqFriendly: true,
-      },
-      {
-        name: "PFLAG National",
-        website: "https://pflag.org",
-        available: "Online resources",
-        specialization: ["family support", "education", "advocacy"],
-        lgbtqFriendly: true,
-      },
-    ],
+// Intent classification patterns
+const INTENT_PATTERNS = {
+  crisis_support: ["help", "crisis", "emergency", "suicide", "hurt", "scared", "alone", "hopeless"],
+  resource_request: ["find", "need", "looking for", "where can i", "how do i", "resources", "services"],
+  identity_support: ["am i", "questioning", "confused", "identity", "gay", "lesbian", "trans", "bisexual", "queer"],
+  coming_out: ["coming out", "tell", "family", "parents", "friends", "how to come out"],
+  healthcare: ["doctor", "healthcare", "medical", "hrt", "hormones", "therapy", "counseling"],
+  legal: ["legal", "lawyer", "name change", "discrimination", "rights", "law"],
+  housing: ["housing", "homeless", "shelter", "place to stay", "kicked out", "safe place"],
+  community: ["community", "friends", "support group", "meet people", "events", "social"],
+  education: ["school", "college", "university", "education", "learning", "training"],
+  general_support: ["talk", "listen", "support", "advice", "guidance", "encouragement"],
+}
+
+// Sample resources database
+const RESOURCES_DATABASE: Resource[] = [
+  {
+    id: "trans-lifeline",
+    name: "Trans Lifeline",
+    description: "24/7 crisis support hotline run by and for transgender people",
+    type: "crisis",
+    contact_info: {
+      phone: "877-565-8860",
+      website: "https://translifeline.org",
+    },
+    availability: "24/7",
+    lgbtq_friendly: true,
+    trans_specific: true,
+    cultural_competency: ["transgender", "lgbtq"],
+    cost: "free",
+    languages: ["English", "Spanish"],
+  },
+  {
+    id: "lgbt-national-hotline",
+    name: "LGBT National Hotline",
+    description: "Confidential support for LGBTQ+ individuals and families",
+    type: "crisis",
+    contact_info: {
+      phone: "1-888-843-4564",
+      website: "https://lgbthotline.org",
+    },
+    availability: "24/7",
+    lgbtq_friendly: true,
+    trans_specific: false,
+    cultural_competency: ["lgbtq", "family_support"],
+    cost: "free",
+    languages: ["English"],
+  },
+  {
+    id: "baltimore-pride-center",
+    name: "Pride Center of Maryland",
+    description: "Community center providing resources and support for LGBTQ+ individuals",
+    type: "community",
+    contact_info: {
+      phone: "410-777-8145",
+      email: "info@pridemd.org",
+      website: "https://pridemd.org",
+      address: "2530 N Charles St, Baltimore, MD 21218",
+    },
+    availability: "Mon-Fri 9AM-5PM",
+    lgbtq_friendly: true,
+    trans_specific: true,
+    cultural_competency: ["lgbtq", "transgender", "youth", "seniors"],
+    cost: "free",
+    languages: ["English", "Spanish"],
+  },
+  {
+    id: "chase-brexton",
+    name: "Chase Brexton Health Care",
+    description: "LGBTQ+ affirming healthcare including HRT and transition services",
+    type: "healthcare",
+    contact_info: {
+      phone: "410-837-2050",
+      website: "https://chasebrexton.org",
+      address: "1001 Cathedral St, Baltimore, MD 21201",
+    },
+    availability: "Mon-Fri 8AM-5PM",
+    lgbtq_friendly: true,
+    trans_specific: true,
+    cultural_competency: ["lgbtq", "transgender", "hiv_care"],
+    cost: "sliding_scale",
+    languages: ["English", "Spanish"],
+  },
+]
+
+export class OmniBotSystem {
+  private personality: BotPersonality = {
+    empathy: 9,
+    professionalism: 7,
+    creativity: 8,
+    wit: 6,
+    culturalCompetency: 10,
+    traumaInformed: 10,
   }
 
-  private organizingResources = [
-    "Learn the difference between mobilizing and organizing",
-    "Study Kwame Ture's teachings on building lasting power",
-    "Connect with local LGBTQ+ advocacy organizations",
-    "Attend community meetings and town halls",
-    "Build coalitions with other marginalized groups",
-    "Start with issues that directly impact your community",
-  ]
+  private context: ConversationContext
+  private resources: Resource[]
 
-  async classifyIntent(message: string): Promise<IntentClassification> {
+  constructor(sessionId: string, userId?: string) {
+    this.context = {
+      userId: userId,
+      sessionId: sessionId,
+      messageHistory: [],
+      identityAffirmations: [],
+      crisisLevel: 0,
+      lastInteraction: new Date(),
+      culturalBackground: [],
+      conversation_history: [],
+      active_resources: [],
+    }
+    this.resources = RESOURCES_DATABASE
+  }
+
+  async processMessage(userMessage: string): Promise<Message> {
+    // Add user message to history
+    const userMsg: Message = {
+      id: `user_${Date.now()}`,
+      content: userMessage,
+      role: "user",
+      timestamp: new Date(),
+    }
+    this.context.messageHistory.push(userMsg)
+
+    // Analyze message
+    const analysis = this.analyzeMessage(userMessage)
+
+    // Update context
+    this.context.crisisLevel = Math.max(this.context.crisisLevel, analysis.crisisLevel)
+    this.context.culturalBackground = [...new Set([...this.context.culturalBackground, ...analysis.culturalContext])]
+
+    // Generate response
+    const botResponse = await this.generateResponse(userMessage, analysis)
+
+    // Add bot response to history
+    this.context.messageHistory.push(botResponse)
+
+    return botResponse
+  }
+
+  private analyzeMessage(message: string): {
+    primaryIntent: string
+    confidence: number
+    crisisLevel: number
+    culturalContext: string[]
+    keywords: string[]
+  } {
     const lowerMessage = message.toLowerCase()
 
-    // Crisis detection - highest priority
-    const crisisLevel = this.detectCrisisLevel(lowerMessage)
-
-    // Intent categories
-    const categories: string[] = []
-    let primary = "general_support"
-    let confidence = 0.7
-
-    // Identity and affirmation
-    if (
-      this.matchesPattern(lowerMessage, [
-        "identity",
-        "who am i",
-        "valid",
-        "belong",
-        "acceptance",
-        "transgender",
-        "trans",
-        "gender",
-        "pronouns",
-        "name",
-        "dysphoria",
-        "coming out",
-        "closet",
-      ])
-    ) {
-      categories.push("identity_support")
-      primary = "identity_support"
-      confidence = 0.9
+    // Crisis level detection
+    let crisisLevel = 0
+    if (CRISIS_INDICATORS.immediate.some((keyword) => lowerMessage.includes(keyword))) {
+      crisisLevel = 10
+    } else if (CRISIS_INDICATORS.high.some((keyword) => lowerMessage.includes(keyword))) {
+      crisisLevel = 7
+    } else if (CRISIS_INDICATORS.medium.some((keyword) => lowerMessage.includes(keyword))) {
+      crisisLevel = 4
     }
 
-    // Mental health and wellness
-    if (
-      this.matchesPattern(lowerMessage, [
-        "anxious",
-        "anxiety",
-        "depressed",
-        "depression",
-        "sad",
-        "overwhelmed",
-        "stressed",
-        "therapy",
-        "therapist",
-        "counseling",
-        "mental health",
-        "ptsd",
-        "trauma",
-        "panic",
-        "fear",
-        "worried",
-        "crying",
-        "sleep",
-        "eating",
-      ])
-    ) {
-      categories.push("mental_health")
-      if (primary === "general_support") {
-        primary = "mental_health"
-        confidence = 0.85
+    // Cultural context detection
+    const culturalContext: string[] = []
+    Object.entries(CULTURAL_CONTEXTS).forEach(([context, keywords]) => {
+      if (keywords.some((keyword) => lowerMessage.includes(keyword))) {
+        culturalContext.push(context)
       }
-    }
+    })
 
-    // Community and relationships
-    if (
-      this.matchesPattern(lowerMessage, [
-        "friends",
-        "family",
-        "community",
-        "lonely",
-        "isolated",
-        "support group",
-        "relationships",
-        "dating",
-        "partner",
-        "rejection",
-        "acceptance",
-        "chosen family",
-      ])
-    ) {
-      categories.push("community_support")
-      if (primary === "general_support") {
-        primary = "community_support"
-        confidence = 0.8
+    // Intent classification
+    let bestIntent = "general_support"
+    let bestScore = 0
+
+    Object.entries(INTENT_PATTERNS).forEach(([intent, patterns]) => {
+      const score = patterns.reduce((acc, pattern) => {
+        return acc + (lowerMessage.includes(pattern) ? 1 : 0)
+      }, 0)
+
+      if (score > bestScore) {
+        bestScore = score
+        bestIntent = intent
       }
-    }
-
-    // Transition and medical
-    if (
-      this.matchesPattern(lowerMessage, [
-        "transition",
-        "hormones",
-        "hrt",
-        "surgery",
-        "doctor",
-        "medical",
-        "insurance",
-        "testosterone",
-        "estrogen",
-        "blockers",
-        "voice",
-        "binding",
-        "tucking",
-      ])
-    ) {
-      categories.push("transition_support")
-      primary = "transition_support"
-      confidence = 0.9
-    }
-
-    // Legal and discrimination
-    if (
-      this.matchesPattern(lowerMessage, [
-        "discrimination",
-        "legal",
-        "rights",
-        "workplace",
-        "housing",
-        "school",
-        "bathroom",
-        "harassment",
-        "bullying",
-        "fired",
-        "evicted",
-        "lawsuit",
-      ])
-    ) {
-      categories.push("legal_support")
-      primary = "legal_support"
-      confidence = 0.85
-    }
-
-    // Organizing and activism
-    if (
-      this.matchesPattern(lowerMessage, [
-        "organize",
-        "organizing",
-        "activism",
-        "activist",
-        "protest",
-        "change",
-        "movement",
-        "community action",
-        "mobilize",
-        "kwame ture",
-        "revolution",
-        "liberation",
-        "justice",
-        "power",
-        "politics",
-        "vote",
-        "campaign",
-      ])
-    ) {
-      categories.push("organizing")
-      primary = "organizing"
-      confidence = 0.8
-    }
-
-    // Spiritual and healing
-    if (
-      this.matchesPattern(lowerMessage, [
-        "spiritual",
-        "meditation",
-        "healing",
-        "energy",
-        "chakra",
-        "prayer",
-        "ancestors",
-        "ritual",
-        "ceremony",
-        "sacred",
-        "divine",
-        "soul",
-      ])
-    ) {
-      categories.push("spiritual_support")
-      if (primary === "general_support") {
-        primary = "spiritual_support"
-        confidence = 0.75
-      }
-    }
-
-    const supportNeeded = this.determineSupportNeeded(categories, crisisLevel)
-    const culturalContext = this.detectCulturalContext(lowerMessage)
-    const traumaIndicators = this.detectTraumaIndicators(lowerMessage)
+    })
 
     return {
-      primary,
-      confidence,
-      categories,
+      primaryIntent: bestIntent,
+      confidence: Math.min(bestScore / 3, 1),
       crisisLevel,
-      supportNeeded,
       culturalContext,
-      traumaIndicators,
+      keywords: lowerMessage.split(" "),
     }
   }
 
-  private detectCrisisLevel(message: string): number {
-    let level = 0
+  private async generateResponse(message: string, analysis: any): Promise<Message> {
+    let response = ""
+    let supportProvided: string[] = []
 
-    // Immediate danger keywords
-    const immediateKeywords = ["kill myself", "end it all", "suicide", "overdose", "jump off", "hanging"]
-    for (const keyword of immediateKeywords) {
-      if (message.includes(keyword)) {
-        level = Math.max(level, 9) // Highest crisis level
+    // Handle crisis situations first
+    if (analysis.crisisLevel >= 8) {
+      response = this.generateCrisisResponse(analysis.culturalContext)
+      supportProvided = ["immediate_crisis_support", "safety_planning", "professional_help"]
+    } else if (analysis.crisisLevel >= 5) {
+      response = this.generateSupportResponse(analysis.culturalContext)
+      supportProvided = ["crisis_resources", "community_support", "self_care"]
+    } else {
+      // Handle based on intent
+      switch (analysis.primaryIntent) {
+        case "resource_request":
+          response = this.generateResourceResponse(analysis.culturalContext)
+          supportProvided = ["resource_recommendation"]
+          break
+        case "identity_support":
+          response = this.generateIdentityResponse(analysis.culturalContext)
+          supportProvided = ["identity_affirmation"]
+          break
+        case "coming_out":
+          response = this.generateComingOutResponse(analysis.culturalContext)
+          supportProvided = ["coming_out_support"]
+          break
+        case "healthcare":
+          response = this.generateHealthcareResponse(analysis.culturalContext)
+          supportProvided = ["healthcare_resources"]
+          break
+        case "legal":
+          response = this.generateLegalResponse(analysis.culturalContext)
+          supportProvided = ["legal_resources"]
+          break
+        case "housing":
+          response = this.generateHousingResponse(analysis.culturalContext)
+          supportProvided = ["housing_resources"]
+          break
+        case "community":
+          response = this.generateCommunityResponse(analysis.culturalContext)
+          supportProvided = ["community_connections"]
+          break
+        default:
+          response = this.generateGeneralResponse(analysis.culturalContext)
+          break
       }
     }
 
-    // High crisis indicators
-    const highKeywords = ["not worth living", "better off dead", "can't go on", "give up", "no point"]
-    for (const keyword of highKeywords) {
-      if (message.includes(keyword)) {
-        level = Math.max(level, 7)
-      }
-    }
-
-    // Moderate crisis indicators
-    const moderateKeywords = ["hopeless", "worthless", "tired of living", "hurt myself", "self harm"]
-    for (const keyword of moderateKeywords) {
-      if (message.includes(keyword)) {
-        level = Math.max(level, 5)
-      }
-    }
-
-    // Mild distress indicators
-    const mildKeywords = ["struggling", "difficult", "hard time", "overwhelmed", "stressed", "sad", "anxious"]
-    for (const keyword of mildKeywords) {
-      if (message.includes(keyword)) {
-        level = Math.max(level, 2)
-      }
-    }
-
-    return level
-  }
-
-  private detectCulturalContext(message: string): string[] {
-    const context: string[] = []
-
-    if (this.matchesPattern(message, ["black", "african american", "afro", "melanin"])) {
-      context.push("black_community")
-    }
-    if (this.matchesPattern(message, ["latino", "latina", "hispanic", "chicano"])) {
-      context.push("latino_community")
-    }
-    if (this.matchesPattern(message, ["church", "christian", "muslim", "religious", "faith"])) {
-      context.push("religious_background")
-    }
-    if (this.matchesPattern(message, ["family", "parents", "mom", "dad", "siblings"])) {
-      context.push("family_dynamics")
-    }
-
-    return context
-  }
-
-  private detectTraumaIndicators(message: string): string[] {
-    const indicators: string[] = []
-
-    if (this.matchesPattern(message, ["abuse", "violence", "assault", "rape", "molest"])) {
-      indicators.push("physical_sexual_trauma")
-    }
-    if (this.matchesPattern(message, ["rejection", "kicked out", "disowned", "abandoned"])) {
-      indicators.push("family_rejection")
-    }
-    if (this.matchesPattern(message, ["bullying", "harassment", "discrimination", "hate"])) {
-      indicators.push("social_trauma")
-    }
-    if (this.matchesPattern(message, ["flashback", "nightmare", "trigger", "ptsd"])) {
-      indicators.push("trauma_symptoms")
-    }
-
-    return indicators
-  }
-
-  private matchesPattern(message: string, keywords: string[]): boolean {
-    return keywords.some((keyword) => message.includes(keyword))
-  }
-
-  private determineSupportNeeded(categories: string[], crisisLevel: number): string[] {
-    const support: string[] = []
-
-    if (crisisLevel >= 7) {
-      support.push("immediate_crisis_intervention")
-      support.push("emergency_resources")
-      support.push("safety_planning")
-    } else if (crisisLevel >= 4) {
-      support.push("mental_health_resources")
-      support.push("professional_referral")
-      support.push("ongoing_support")
-    }
-
-    if (categories.includes("identity_support")) {
-      support.push("affirmation")
-      support.push("community_connection")
-      support.push("identity_resources")
-    }
-
-    if (categories.includes("transition_support")) {
-      support.push("medical_resources")
-      support.push("transition_guidance")
-      support.push("healthcare_navigation")
-    }
-
-    if (categories.includes("legal_support")) {
-      support.push("legal_resources")
-      support.push("advocacy_support")
-      support.push("rights_education")
-    }
-
-    if (categories.includes("organizing")) {
-      support.push("organizing_resources")
-      support.push("community_action")
-      support.push("leadership_development")
-    }
-
-    if (categories.includes("spiritual_support")) {
-      support.push("spiritual_resources")
-      support.push("healing_practices")
-      support.push("meditation_guidance")
-    }
-
-    return support
-  }
-
-  async generateResponse(message: string, context: ConversationContext, intent: IntentClassification): Promise<string> {
-    // Crisis intervention takes absolute priority
-    if (intent.crisisLevel >= 7) {
-      return this.generateCrisisResponse(intent, context)
-    }
-
-    // Generate contextual response based on intent
-    switch (intent.primary) {
-      case "identity_support":
-        return this.generateIdentityResponse(message, context, intent)
-
-      case "mental_health":
-        return this.generateMentalHealthResponse(message, context, intent)
-
-      case "community_support":
-        return this.generateCommunityResponse(message, context, intent)
-
-      case "transition_support":
-        return this.generateTransitionResponse(message, context, intent)
-
-      case "legal_support":
-        return this.generateLegalResponse(message, context, intent)
-
-      case "organizing":
-        return this.generateOrganizingResponse(message, context, intent)
-
-      case "spiritual_support":
-        return this.generateSpiritualResponse(message, context, intent)
-
-      default:
-        return this.generateGeneralResponse(message, context, intent)
+    return {
+      id: `bot_${Date.now()}`,
+      content: response,
+      role: "assistant",
+      timestamp: new Date(),
+      intent: analysis.primaryIntent,
+      crisisLevel: analysis.crisisLevel,
+      supportProvided,
     }
   }
 
-  private generateCrisisResponse(intent: IntentClassification, context: ConversationContext): string {
-    const resources = this.lgbtqResources.crisis
-    const resourceText = resources.map((r) => `• **${r.name}**: ${r.phone || r.text} (${r.available})`).join("\n")
-
-    let response = `I'm deeply concerned about you right now, and I want you to know that your life has immense value. You matter more than you know, and there are people who want to help you through this. 💜
-
-**Please reach out to one of these crisis resources immediately:**
-
-${resourceText}
-
-If you're in immediate physical danger, please call 911 or go to your nearest emergency room.`
-
-    // Add culturally specific support if detected
-    if (intent.culturalContext?.includes("black_community")) {
-      response += `\n\n**For Black LGBTQ+ folks specifically:**
-• National Queer and Trans Therapists of Color Network
-• Black Lives Matter Healing Justice Committee
-• Your community sees you, values you, and needs you here.`
-    }
-
-    if (intent.traumaIndicators?.length) {
-      response += `\n\n**Trauma-Informed Support:**
-I recognize you may be carrying heavy burdens from past experiences. Healing is possible, and you deserve support that understands your journey.`
-    }
-
-    response += `\n\nYou are loved, you are valid, and you deserve to be here. Your community needs your light in this world. 🏳️‍⚧️✨`
-
-    return response
-  }
-
-  private generateIdentityResponse(
-    message: string,
-    context: ConversationContext,
-    intent: IntentClassification,
-  ): string {
-    const affirmation = this.identityAffirmations[Math.floor(Math.random() * this.identityAffirmations.length)]
-
-    let response = `${affirmation}
-
-I hear you exploring questions about identity, and I want you to know that this journey is completely valid and sacred. Many people in our community have walked similar paths, and there's no "right" way to understand yourself.
-
-Your feelings and experiences are real and important. Whether you're questioning, exploring, or affirming who you are, you deserve support and respect throughout this process.`
-
-    // Add culturally specific affirmations
-    if (intent.culturalContext?.includes("black_community")) {
-      response += `\n\nAs a Black LGBTQ+ person, you carry the strength of ancestors who survived and thrived despite incredible challenges. Your identity is part of a beautiful legacy of resilience and authenticity. ✊🏿🏳️‍⚧️`
-    }
-
-    if (intent.culturalContext?.includes("religious_background")) {
-      response += `\n\nI understand that navigating identity within religious or spiritual contexts can be especially complex. Many LGBTQ+ people of faith have found ways to honor both their spirituality and their authentic selves. You are not broken, and you are not a mistake.`
-    }
-
-    response += `\n\nWould you like to talk more about what's on your mind? I'm here to listen without judgment and hold space for whatever you're experiencing. 🌈💖`
-
-    return response
-  }
-
-  private generateMentalHealthResponse(
-    message: string,
-    context: ConversationContext,
-    intent: IntentClassification,
-  ): string {
-    let response = `Thank you for sharing what you're going through. Mental health struggles are real, and it takes incredible courage to reach out. 💜
-
-As an LGBTQ+ person, you may face unique stressors that others don't always understand - things like minority stress, family rejection, discrimination, or internalized shame. These experiences can deeply impact mental health, and your feelings are completely valid.`
-
-    // Add trauma-informed language if indicators present
-    if (intent.traumaIndicators?.length) {
-      response += `\n\nI notice you may be carrying some heavy experiences. Trauma can affect us in many ways - emotionally, physically, and spiritually. Healing is possible, and you deserve care that understands the full impact of what you've been through.`
-    }
-
-    response += `\n\n**Some things that might help:**
-• Connecting with LGBTQ+-affirming therapists
-• Finding community support groups
-• Practicing self-care that feels authentic to you
-• Remember that healing isn't linear - be gentle with yourself
-• Building chosen family and supportive relationships
-
-**Local Baltimore Resources:**
-• LGBTQ Health Resource Center of Chase Brexton
-• Baltimore Crisis Response Inc.
-• Behavioral Health System Baltimore
-
-Would you like me to share more specific mental health resources? I'm here to support you through this journey. 🌱✨`
-
-    return response
-  }
-
-  private generateCommunityResponse(
-    message: string,
-    context: ConversationContext,
-    intent: IntentClassification,
-  ): string {
-    let response = `Community is so important, especially for LGBTQ+ folks who may have experienced rejection or isolation. You're not alone in feeling this way - many of us have walked this path. 🤗
-
-Building chosen family and finding your community can take time, but it's one of the most healing things you can do. Here in Baltimore and beyond, there are spaces where you can connect with others who understand your experience.`
-
-    if (intent.culturalContext?.includes("family_dynamics")) {
-      response += `\n\nI hear that family relationships might be part of what you're navigating. Whether you're dealing with acceptance, rejection, or something in between, know that you deserve love and support. Sometimes our chosen family becomes our strongest source of connection.`
-    }
-
-    response += `\n\n**Ways to build community:**
-• Join LGBTQ+ social groups or meetups in Baltimore
-• Volunteer for causes you care about
-• Attend community events and pride celebrations
-• Connect online with supportive communities (like this one!)
-• Consider support groups at local LGBTQ+ centers
-• Explore faith communities that are affirming if spirituality is important to you
-
-**Baltimore Community Spaces:**
-• Pride Center of Maryland
-• FreeState Justice community events
-• Chase Brexton LGBTQ+ support groups
-• Baltimore Black Pride events
-
-Your community is out there, and you deserve to be surrounded by people who celebrate you for who you are. Would you like help finding specific local community resources or events? 🌈💖`
-
-    return response
-  }
-
-  private generateTransitionResponse(
-    message: string,
-    context: ConversationContext,
-    intent: IntentClassification,
-  ): string {
-    let response = `Transition journeys are deeply personal and sacred, and everyone's path looks different. Whatever stage you're at - questioning, exploring, or actively transitioning - your experience is valid and worthy of support. 🏳️‍⚧️
-
-I understand this can feel overwhelming, with medical, social, legal, and sometimes spiritual considerations. It's okay to take things one step at a time and move at your own pace. There's no "right" way to transition.`
-
-    if (intent.culturalContext?.includes("black_community")) {
-      response += `\n\nAs a Black trans person, you may face additional challenges in healthcare and society. Know that there are providers and communities who understand the intersection of your identities and are committed to supporting you with culturally competent care.`
-    }
-
-    response += `\n\n**Resources that might help:**
-• LGBTQ+-affirming healthcare providers (Chase Brexton in Baltimore)
-• Support groups for trans individuals
-• Legal resources for name/gender marker changes (FreeState Justice)
-• Financial assistance programs for transition-related care
-• Peer support networks and mentorship
-• Online communities for specific aspects of transition
-
-**Medical Considerations:**
-• Hormone replacement therapy (HRT) information
-• Surgery consultations and referrals
-• Voice training resources
-• Mental health support throughout the process
-
-Remember: you are the expert on your own experience. Trust yourself, move at your own pace, and surround yourself with supportive people who affirm your journey.
-
-Would you like information about specific aspects of transition, local trans-friendly healthcare providers, or support groups? I'm here to help you navigate this with dignity and care. 💙🤍💗`
-
-    return response
-  }
-
-  private generateLegalResponse(message: string, context: ConversationContext, intent: IntentClassification): string {
-    let response = `Legal issues affecting LGBTQ+ people can be complex and stressful, but you have rights, and there are people who can help you understand and protect them. ⚖️
-
-**Common legal areas where LGBTQ+ folks need support:**
-• Employment discrimination and workplace harassment
-• Housing discrimination and tenant rights
-• Healthcare access and medical discrimination
-• Family law and parental rights
-• Name and gender marker changes on documents
-• Immigration issues for LGBTQ+ individuals
-• School and education discrimination
-• Public accommodations and bathroom access`
-
-    if (intent.culturalContext?.includes("black_community")) {
-      response += `\n\n**Intersectional Considerations:**
-As a Black LGBTQ+ person, you may face compounded discrimination. Legal advocates who understand both racial and LGBTQ+ issues can provide more effective support.`
-    }
-
-    response += `\n\n**Maryland/Baltimore Legal Resources:**
-• **FreeState Justice** - Maryland's LGBTQ+ legal advocacy organization
-• **ACLU of Maryland** - Civil liberties and discrimination cases
-• **Pro Bono Resource Center of Maryland** - Free legal services
-• **Baltimore City Human Relations Commission** - Local discrimination complaints
-
-**National Resources:**
-• Lambda Legal - LGBTQ+ legal advocacy
-• National Center for Lesbian Rights
-• Transgender Law Center
-
-You don't have to navigate this alone. These organizations have lawyers and advocates who specialize in LGBTQ+ legal issues and can help you understand your options.
-
-Would you like me to connect you with specific legal resources for your situation, or help you understand your rights in a particular area? Your rights matter, and there are people fighting to protect them. 💜⚖️`
-
-    return response
-  }
-
-  private generateOrganizingResponse(
-    message: string,
-    context: ConversationContext,
-    intent: IntentClassification,
-  ): string {
-    let response = `I love that you're thinking about organizing and creating change! Our community has a powerful history of organizing for justice and liberation. 🔥✊
-
-As Kwame Ture taught us, there's a crucial difference between mobilizing (getting people fired up for a moment) and organizing (building lasting systems for change). Both are important, but organizing creates the foundation for real transformation that outlasts any single campaign or leader.
-
-**Key Organizing Principles:**
-• Build power WITH people, not just for them
-• Focus on systemic change, not just individual solutions
-• Create sustainable structures that can continue without you
-• Develop leadership in others, don't just be the leader
-• Connect local struggles to broader movements for liberation`
-
-    if (intent.culturalContext?.includes("black_community")) {
-      response += `\n\n**Black Liberation Organizing:**
-Our struggle for LGBTQ+ liberation is deeply connected to the broader fight for Black liberation. The most powerful organizing happens when we understand these intersections and build coalitions across movements.`
-    }
-
-    response += `\n\n**Ways to get involved in Baltimore:**
-• Join local LGBTQ+ advocacy organizations (FreeState Justice, Pride Center)
-• Attend community meetings and town halls
-• Learn about policy issues affecting our community
-• Build coalitions with other marginalized groups
-• Start with issues that directly impact your neighborhood
-• Connect with Black Lives Matter Baltimore or other justice organizations
-
-**Organizing vs Mobilizing Examples:**
-• **Mobilizing:** Organizing a protest against anti-trans legislation
-• **Organizing:** Building a network of safe houses and mutual aid for trans people
-• **Mobilizing:** Getting people to vote in an election
-• **Organizing:** Creating ongoing political education and leadership development
-
-Remember: organizing is about building sustainable power that can create lasting change. It's about creating the world we want to live in, not just fighting against what we don't want.
-
-Want to learn more about organizing principles? Check out our Organizing 101 module! What issues are you most passionate about changing? 🌟💪`
-
-    return response
-  }
-
-  private generateSpiritualResponse(
-    message: string,
-    context: ConversationContext,
-    intent: IntentClassification,
-  ): string {
-    let response = `I honor the spiritual dimension of your journey. Many LGBTQ+ people find that connecting with the sacred - however you understand it - can be deeply healing and empowering. ✨🙏
-
-Your spiritual path is valid, whether it's traditional religion, earth-based practices, meditation, ancestor veneration, or your own unique relationship with the divine. There's no conflict between being LGBTQ+ and being spiritual - you are a sacred being exactly as you are.`
-
-    if (intent.culturalContext?.includes("religious_background")) {
-      response += `\n\n**Navigating Faith and Identity:**
-I understand that reconciling religious upbringing with LGBTQ+ identity can be complex. Many people have found ways to maintain their spiritual connection while honoring their authentic selves. You don't have to choose between faith and identity - both can coexist beautifully.`
-    }
-
-    if (intent.culturalContext?.includes("black_community")) {
-      response += `\n\n**Ancestral Wisdom:**
-Your ancestors survived incredible challenges and passed down strength, resilience, and wisdom. Many Black LGBTQ+ people find power in connecting with ancestral spirits and traditional African spiritual practices that honored gender and sexual diversity.`
-    }
-
-    response += `\n\n**Spiritual Resources and Practices:**
-• Meditation and mindfulness practices
-• LGBTQ+-affirming faith communities
-• Nature-based spiritual practices
-• Ancestor veneration and connection
-• Energy healing and chakra work
-• Sacred activism and spiritual organizing
-• Prayer and contemplative practices
-• Community ritual and ceremony
-
-**Local Affirming Spiritual Communities:**
-• Metropolitan Community Church of Baltimore
-• Unitarian Universalist congregations
-• Progressive Christian churches
-• Buddhist meditation groups
-• Interfaith spiritual communities
-
-**Healing Practices:**
-• Our Melly's Spot audio library has guided meditations
-• Breathwork and body-based practices
-• Journaling and spiritual reflection
-• Community prayer and healing circles
-
-Your spiritual journey is yours to define. Whether you're seeking healing, connection, purpose, or simply peace, you deserve spiritual support that honors all of who you are.
-
-Would you like guidance on specific spiritual practices, or help finding affirming spiritual communities? I'm here to support your sacred journey. 🌟💜`
-
-    return response
-  }
-
-  private generateGeneralResponse(message: string, context: ConversationContext, intent: IntentClassification): string {
+  private generateCrisisResponse(culturalContext: string[]): string {
     const responses = [
-      "I'm here to listen and support you. What's on your mind today? 💜",
-      "Thank you for sharing with me. How are you feeling right now? 🌟",
-      "I appreciate you reaching out. What would be most helpful for you today? ✨",
-      "You matter, and your experiences are valid. How can I support you? 💖",
-      "I'm glad you're here. What's been weighing on your heart lately? 🤗",
+      "I'm really concerned about you right now. Your life has value and you matter. Let's get you connected with immediate support.",
+      "Thank you for reaching out - that takes courage. You don't have to go through this alone. There are people who want to help.",
+      "I hear that you're in a lot of pain right now. Crisis support is available 24/7, and I want to make sure you're safe.",
     ]
 
-    const baseResponse = responses[Math.floor(Math.random() * responses.length)]
+    let response = responses[Math.floor(Math.random() * responses.length)]
 
-    let response = `${baseResponse}
-
-I'm OmniBot, and I'm here to provide culturally competent, trauma-informed support for LGBTQ+ folks in Baltimore and beyond. Whether you want to talk about identity, mental health, community, organizing, spirituality, or anything else, I'm here to listen without judgment.
-
-**I can help with:**
-• Identity exploration and affirmation 🏳️‍⚧️
-• Mental health and wellness support 🧠
-• Community connection and resources 👥
-• Crisis support and safety planning 🆘
-• Organizing and activism guidance ✊
-• Spiritual and healing practices 🙏
-• Legal rights and advocacy ⚖️
-• Transition support and resources 💙
-
-You're in a safe space here - a digital sanctuary built by and for our community. Your story matters, your feelings are valid, and you deserve support that truly sees and affirms you.`
-
-    // Add personalized touch based on context
-    if (context.preferredPronouns) {
-      response += `\n\nI'll make sure to use your pronouns (${context.preferredPronouns}) as we talk. 💜`
+    if (culturalContext.includes("transgender")) {
+      response +=
+        " The Trans Lifeline (877-565-8860) is staffed by trans people who understand what you're going through."
     }
 
-    response += `\n\nWhat would you like to explore together today? 🌈✨`
+    if (culturalContext.includes("black_lgbtq")) {
+      response += " I understand that being Black and LGBTQ+ can bring unique challenges and intersectional stress."
+    }
+
+    response += "\n\n🚨 **IMMEDIATE CRISIS RESOURCES:**\n"
+    response += "• Trans Lifeline: 877-565-8860\n"
+    response += "• LGBT National Hotline: 1-888-843-4564\n"
+    response += "• National Suicide Prevention Lifeline: 988\n"
+    response += "• Crisis Text Line: Text HOME to 741741"
 
     return response
   }
 
-  async updatePersonality(updates: Partial<BotPersonality>): Promise<void> {
-    this.personality = { ...this.personality, ...updates }
-  }
+  private generateSupportResponse(culturalContext: string[]): string {
+    const responses = [
+      "I can hear that you're going through a difficult time. It's okay to not be okay, and reaching out shows strength.",
+      "Thank you for sharing what you're experiencing. You deserve support and care during this challenging time.",
+      "I want you to know that your feelings are valid, and there are people and resources that can help.",
+    ]
 
-  async learnFromFeedback(messageId: string, feedback: "positive" | "negative", context?: string): Promise<void> {
-    // In a real implementation, this would update the bot's learning model
-    console.log(`Learning from feedback: ${feedback} for message ${messageId}`)
-    if (context) {
-      console.log(`Context: ${context}`)
+    let response = responses[Math.floor(Math.random() * responses.length)]
+
+    if (culturalContext.includes("family")) {
+      response +=
+        " Family rejection is incredibly painful, especially in our community. You are worthy of love and acceptance."
     }
+
+    if (culturalContext.includes("youth")) {
+      response +=
+        " Being young and LGBTQ+ can feel isolating, but there are supportive communities and resources specifically for LGBTQ+ youth."
+    }
+
+    return response
   }
 
-  getPersonality(): BotPersonality {
-    return { ...this.personality }
+  private generateIdentityResponse(culturalContext: string[]): string {
+    const responses = [
+      "Questioning your identity is a normal and brave part of self-discovery. There's no rush to label yourself - take your time.",
+      "Your identity is yours to define, and it's okay if it evolves over time. The LGBTQ+ community is here to support you.",
+      "Exploring your identity can bring up many feelings. Remember that you're not alone in this journey.",
+    ]
+
+    let response = responses[Math.floor(Math.random() * responses.length)]
+
+    if (culturalContext.includes("transgender")) {
+      response +=
+        " If you're questioning your gender identity, know that trans experiences are diverse and valid. Consider connecting with other trans people who can share their experiences."
+    }
+
+    if (culturalContext.includes("religious")) {
+      response +=
+        " Reconciling faith and LGBTQ+ identity can be challenging. There are affirming religious communities and resources that can help."
+    }
+
+    return response
   }
 
-  getCrisisResources() {
-    return this.lgbtqResources
+  private generateComingOutResponse(culturalContext: string[]): string {
+    let response =
+      "Coming out is a personal journey that happens at your own pace. You get to decide when, how, and to whom you come out. Your safety and well-being come first."
+
+    if (culturalContext.includes("family")) {
+      response +=
+        "\n\nComing out to family can be especially challenging. Consider having a support system in place and resources ready to share."
+    }
+
+    if (culturalContext.includes("black_lgbtq")) {
+      response +=
+        "\n\nI understand that coming out in Black families and communities can involve unique cultural considerations and potential challenges."
+    }
+
+    response += "\n\n💡 **Coming Out Tips:**\n"
+    response += "• Start with someone you trust\n"
+    response += "• Have resources ready to share\n"
+    response += "• Plan for different reactions\n"
+    response += "• Remember: their reaction is about them, not you"
+
+    return response
   }
 
-  getOrganizingResources() {
-    return this.organizingResources
+  private generateHealthcareResponse(culturalContext: string[]): string {
+    let response =
+      "Finding LGBTQ+-affirming healthcare is crucial for your well-being. You deserve respectful, knowledgeable care from providers who understand LGBTQ+ health needs."
+
+    if (culturalContext.includes("transgender")) {
+      response +=
+        "\n\nFor transgender healthcare including HRT and transition-related care, look for providers with specific experience in transgender medicine."
+    }
+
+    response += "\n\n🏥 **Healthcare Tips:**\n"
+    response += "• Research LGBTQ+-friendly providers\n"
+    response += "• Ask about their experience with LGBTQ+ patients\n"
+    response += "• Bring a support person if helpful\n"
+    response += "• Know your rights as a patient"
+
+    return response
   }
 
-  getIdentityAffirmations() {
-    return this.identityAffirmations
+  private generateLegalResponse(culturalContext: string[]): string {
+    let response =
+      "Legal issues affecting LGBTQ+ people can be complex. It's important to work with attorneys who understand LGBTQ+ legal needs and anti-discrimination laws."
+
+    if (culturalContext.includes("transgender")) {
+      response +=
+        "\n\nFor transgender legal needs like name changes and gender marker updates, look for attorneys with specific experience in transgender law."
+    }
+
+    response += "\n\n⚖️ **Legal Resources:**\n"
+    response += "• Name and gender marker changes\n"
+    response += "• Discrimination and harassment\n"
+    response += "• Family law and adoption\n"
+    response += "• Employment rights"
+
+    return response
+  }
+
+  private generateHousingResponse(culturalContext: string[]): string {
+    let response =
+      "Safe, affirming housing is a basic need. If you're experiencing housing insecurity or discrimination, there are resources and legal protections available."
+
+    if (culturalContext.includes("youth")) {
+      response +=
+        "\n\nLGBTQ+ youth experiencing family rejection or homelessness have specific resources and shelters designed to provide safe, affirming care."
+    }
+
+    response += "\n\n🏠 **Housing Support:**\n"
+    response += "• LGBTQ+-affirming shelters\n"
+    response += "• Housing discrimination resources\n"
+    response += "• Emergency housing assistance\n"
+    response += "• Transitional housing programs"
+
+    return response
+  }
+
+  private generateCommunityResponse(culturalContext: string[]): string {
+    let response =
+      "Building community connections is so important for LGBTQ+ well-being. Baltimore has a vibrant LGBTQ+ community with many ways to get involved and find your people."
+
+    if (culturalContext.includes("black_lgbtq")) {
+      response +=
+        "\n\nThere are specific groups and events for Black LGBTQ+ individuals that celebrate the intersection of racial and LGBTQ+ identity."
+    }
+
+    response += "\n\n🌈 **Community Connections:**\n"
+    response += "• Pride Center of Maryland events\n"
+    response += "• LGBTQ+ support groups\n"
+    response += "• Social and recreational activities\n"
+    response += "• Volunteer opportunities"
+
+    return response
+  }
+
+  private generateGeneralResponse(culturalContext: string[]): string {
+    const responses = [
+      "I'm here to listen and support you. What's on your mind today?",
+      "Thank you for reaching out. How can I help you today?",
+      "I'm glad you're here. What would you like to talk about or learn more about?",
+    ]
+
+    let response = responses[Math.floor(Math.random() * responses.length)]
+
+    response += "\n\n💖 **I can help with:**\n"
+    response += "• Crisis support and resources\n"
+    response += "• LGBTQ+ identity questions\n"
+    response += "• Coming out support\n"
+    response += "• Healthcare and legal resources\n"
+    response += "• Community connections\n"
+    response += "• General support and encouragement"
+
+    return response
+  }
+
+  getConversationHistory(): Message[] {
+    return this.context.messageHistory
+  }
+
+  getCurrentCrisisLevel(): number {
+    return this.context.crisisLevel
+  }
+
+  getCulturalContext(): string[] {
+    return this.context.culturalBackground || []
+  }
+
+  getActiveResources(): Resource[] {
+    return this.context.active_resources
   }
 }
 
-export const omniBotSystem = new OmniBotSystem()
+export const omniBotSystem = new OmniBotSystem("session123")

@@ -3,449 +3,360 @@ import { createClient } from "@supabase/supabase-js"
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
-// Client-side Supabase client
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-  },
-})
+export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
-// Server-side Supabase client (for use in API routes and server components)
-export const createServerSupabaseClient = () => {
-  return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-    },
-  })
+// Database types
+export interface User {
+  id: string
+  email: string
+  username?: string
+  display_name?: string
+  pronouns?: string
+  identity_tags?: string[]
+  location?: string
+  bio?: string
+  avatar_url?: string
+  role: "member" | "organizer" | "admin" | "moderator"
+  is_verified: boolean
+  crisis_history: boolean
+  preferred_language: string
+  created_at: string
+  updated_at: string
+  last_active: string
 }
 
-// Database types (generated from Supabase)
-export interface Database {
-  public: {
-    Tables: {
-      conversations: {
-        Row: {
-          id: string
-          user_id: string
-          session_id: string
-          created_at: string
-          updated_at: string
-          metadata: Record<string, any>
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          session_id: string
-          created_at?: string
-          updated_at?: string
-          metadata?: Record<string, any>
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          session_id?: string
-          created_at?: string
-          updated_at?: string
-          metadata?: Record<string, any>
-        }
-      }
-      messages: {
-        Row: {
-          id: string
-          conversation_id: string
-          content: string
-          role: "user" | "assistant"
-          timestamp: string
-          intent_classification: Record<string, any> | null
-          crisis_level: number
-          support_provided: string[] | null
-          metadata: Record<string, any>
-        }
-        Insert: {
-          id?: string
-          conversation_id: string
-          content: string
-          role: "user" | "assistant"
-          timestamp?: string
-          intent_classification?: Record<string, any> | null
-          crisis_level?: number
-          support_provided?: string[] | null
-          metadata?: Record<string, any>
-        }
-        Update: {
-          id?: string
-          conversation_id?: string
-          content?: string
-          role?: "user" | "assistant"
-          timestamp?: string
-          intent_classification?: Record<string, any> | null
-          crisis_level?: number
-          support_provided?: string[] | null
-          metadata?: Record<string, any>
-        }
-      }
-      bot_personalities: {
-        Row: {
-          id: string
-          user_id: string
-          empathy: number
-          professionalism: number
-          creativity: number
-          wit: number
-          cultural_competency: number
-          trauma_informed: number
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          empathy?: number
-          professionalism?: number
-          creativity?: number
-          wit?: number
-          cultural_competency?: number
-          trauma_informed?: number
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          empathy?: number
-          professionalism?: number
-          creativity?: number
-          wit?: number
-          cultural_competency?: number
-          trauma_informed?: number
-          created_at?: string
-          updated_at?: string
-        }
-      }
-      conversation_contexts: {
-        Row: {
-          id: string
-          conversation_id: string
-          current_mood: string | null
-          identity_affirmations: string[] | null
-          crisis_level: number
-          preferred_pronouns: string | null
-          cultural_background: string[] | null
-          support_needs: string[] | null
-          trauma_indicators: string[] | null
-          last_interaction: string
-          metadata: Record<string, any>
-        }
-        Insert: {
-          id?: string
-          conversation_id: string
-          current_mood?: string | null
-          identity_affirmations?: string[] | null
-          crisis_level?: number
-          preferred_pronouns?: string | null
-          cultural_background?: string[] | null
-          support_needs?: string[] | null
-          trauma_indicators?: string[] | null
-          last_interaction?: string
-          metadata?: Record<string, any>
-        }
-        Update: {
-          id?: string
-          conversation_id?: string
-          current_mood?: string | null
-          identity_affirmations?: string[] | null
-          crisis_level?: number
-          preferred_pronouns?: string | null
-          cultural_background?: string[] | null
-          support_needs?: string[] | null
-          trauma_indicators?: string[] | null
-          last_interaction?: string
-          metadata?: Record<string, any>
-        }
-      }
-      community_resources: {
-        Row: {
-          id: string
-          name: string
-          description: string | null
-          resource_type: string
-          contact_info: Record<string, any> | null
-          location: string | null
-          is_lgbtq_friendly: boolean
-          specializations: string[] | null
-          availability: string | null
-          is_crisis_resource: boolean
-          is_verified: boolean
-          created_at: string
-          updated_at: string
-          metadata: Record<string, any>
-        }
-        Insert: {
-          id?: string
-          name: string
-          description?: string | null
-          resource_type: string
-          contact_info?: Record<string, any> | null
-          location?: string | null
-          is_lgbtq_friendly?: boolean
-          specializations?: string[] | null
-          availability?: string | null
-          is_crisis_resource?: boolean
-          is_verified?: boolean
-          created_at?: string
-          updated_at?: string
-          metadata?: Record<string, any>
-        }
-        Update: {
-          id?: string
-          name?: string
-          description?: string | null
-          resource_type?: string
-          contact_info?: Record<string, any> | null
-          location?: string | null
-          is_lgbtq_friendly?: boolean
-          specializations?: string[] | null
-          availability?: string | null
-          is_crisis_resource?: boolean
-          is_verified?: boolean
-          created_at?: string
-          updated_at?: string
-          metadata?: Record<string, any>
-        }
-      }
-      audio_tracks: {
-        Row: {
-          id: string
-          title: string
-          artist: string
-          duration: number
-          category: "meditation" | "affirmations" | "nature" | "binaural"
-          description: string | null
-          audio_url: string
-          image_url: string | null
-          tags: string[] | null
-          likes: number
-          is_featured: boolean
-          created_at: string
-          updated_at: string
-          metadata: Record<string, any>
-        }
-        Insert: {
-          id?: string
-          title: string
-          artist: string
-          duration: number
-          category: "meditation" | "affirmations" | "nature" | "binaural"
-          description?: string | null
-          audio_url: string
-          image_url?: string | null
-          tags?: string[] | null
-          likes?: number
-          is_featured?: boolean
-          created_at?: string
-          updated_at?: string
-          metadata?: Record<string, any>
-        }
-        Update: {
-          id?: string
-          title?: string
-          artist?: string
-          duration?: number
-          category?: "meditation" | "affirmations" | "nature" | "binaural"
-          description?: string | null
-          audio_url?: string
-          image_url?: string | null
-          tags?: string[] | null
-          likes?: number
-          is_featured?: boolean
-          created_at?: string
-          updated_at?: string
-          metadata?: Record<string, any>
-        }
-      }
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      get_crisis_resources: {
-        Args: Record<PropertyKey, never>
-        Returns: {
-          name: string
-          contact_info: Record<string, any>
-          specializations: string[]
-          availability: string
-          is_lgbtq_friendly: boolean
-        }[]
-      }
-      update_bot_personality: {
-        Args: {
-          p_empathy?: number
-          p_professionalism?: number
-          p_creativity?: number
-          p_wit?: number
-          p_cultural_competency?: number
-          p_trauma_informed?: number
-        }
-        Returns: void
-      }
-      log_crisis_intervention: {
-        Args: {
-          p_conversation_id: string
-          p_crisis_level: number
-          p_intervention_type: string
-          p_resources_provided: string[]
-          p_notes?: string
-        }
-        Returns: string
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-  }
+export interface Resource {
+  id: string
+  name: string
+  description: string
+  type: "crisis" | "healthcare" | "legal" | "housing" | "community" | "education"
+  contact_phone?: string
+  contact_email?: string
+  website_url?: string
+  address?: string
+  availability: string
+  lgbtq_friendly: boolean
+  trans_specific: boolean
+  cultural_competency: string[]
+  cost: string
+  languages: string[]
+  verified: boolean
+  verified_by?: string
+  verified_at?: string
+  created_at: string
+  updated_at: string
 }
 
-// Helper functions for common database operations
+export interface AudioTrack {
+  id: string
+  title: string
+  artist: string
+  description?: string
+  category: "meditation" | "affirmations" | "nature" | "binaural"
+  duration: number
+  audio_url: string
+  image_url?: string
+  tags: string[]
+  transcript?: string
+  likes_count: number
+  play_count: number
+  rating: number
+  uploaded_by?: string
+  is_public: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface Event {
+  id: string
+  title: string
+  description: string
+  type: "workshop" | "protest" | "meeting" | "social" | "healing" | "education"
+  organizer_id: string
+  start_time: string
+  end_time?: string
+  location?: string
+  virtual_link?: string
+  max_attendees?: number
+  is_public: boolean
+  requires_approval: boolean
+  tags: string[]
+  image_url?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface CommunityPost {
+  id: string
+  author_id: string
+  title?: string
+  content: string
+  type: "story" | "resource" | "question" | "announcement"
+  tags: string[]
+  is_anonymous: boolean
+  is_public: boolean
+  likes_count: number
+  comments_count: number
+  created_at: string
+  updated_at: string
+}
+
+export interface OmniBotConversation {
+  id: string
+  session_id: string
+  user_id?: string
+  user_message: string
+  bot_response: string
+  intent?: string
+  confidence?: number
+  crisis_level: number
+  cultural_context: string[]
+  resources_provided: string[]
+  follow_up_actions: string[]
+  feedback_rating?: number
+  feedback_text?: string
+  timestamp: string
+}
+
+// Helper functions for database operations
 export const dbHelpers = {
-  // Get or create conversation
-  async getOrCreateConversation(userId: string, sessionId: string) {
-    const { data: existing } = await supabase
-      .from("conversations")
-      .select("*")
-      .eq("user_id", userId)
-      .eq("session_id", sessionId)
-      .single()
+  // User operations
+  async createUser(userData: Partial<User>) {
+    const { data, error } = await supabase.from("users").insert([userData]).select().single()
 
-    if (existing) {
-      return existing
+    if (error) throw error
+    return data
+  },
+
+  async getUserById(id: string) {
+    const { data, error } = await supabase.from("users").select("*").eq("id", id).single()
+
+    if (error) throw error
+    return data
+  },
+
+  async updateUser(id: string, updates: Partial<User>) {
+    const { data, error } = await supabase.from("users").update(updates).eq("id", id).select().single()
+
+    if (error) throw error
+    return data
+  },
+
+  // Resource operations
+  async getResources(filters?: { type?: string; lgbtq_friendly?: boolean; trans_specific?: boolean }) {
+    let query = supabase.from("resources").select("*")
+
+    if (filters?.type) {
+      query = query.eq("type", filters.type)
+    }
+    if (filters?.lgbtq_friendly !== undefined) {
+      query = query.eq("lgbtq_friendly", filters.lgbtq_friendly)
+    }
+    if (filters?.trans_specific !== undefined) {
+      query = query.eq("trans_specific", filters.trans_specific)
     }
 
-    const { data: newConversation, error } = await supabase
-      .from("conversations")
-      .insert({
-        user_id: userId,
-        session_id: sessionId,
-      })
-      .select()
-      .single()
-
-    if (error) throw error
-    return newConversation
-  },
-
-  // Save message
-  async saveMessage(
-    conversationId: string,
-    content: string,
-    role: "user" | "assistant",
-    intentClassification?: Record<string, any>,
-    crisisLevel?: number,
-    supportProvided?: string[],
-  ) {
-    const { data, error } = await supabase
-      .from("messages")
-      .insert({
-        conversation_id: conversationId,
-        content,
-        role,
-        intent_classification: intentClassification,
-        crisis_level: crisisLevel || 0,
-        support_provided: supportProvided,
-      })
-      .select()
-      .single()
+    const { data, error } = await query.order("name")
 
     if (error) throw error
     return data
   },
 
-  // Get conversation history
-  async getConversationHistory(conversationId: string, limit = 50) {
-    const { data, error } = await supabase
-      .from("messages")
-      .select("*")
-      .eq("conversation_id", conversationId)
-      .order("timestamp", { ascending: true })
-      .limit(limit)
-
-    if (error) throw error
-    return data || []
-  },
-
-  // Update conversation context
-  async updateConversationContext(
-    conversationId: string,
-    context: Partial<Database["public"]["Tables"]["conversation_contexts"]["Insert"]>,
-  ) {
-    const { data, error } = await supabase
-      .from("conversation_contexts")
-      .upsert({
-        conversation_id: conversationId,
-        ...context,
-        last_interaction: new Date().toISOString(),
-      })
-      .select()
-      .single()
+  async createResource(resourceData: Partial<Resource>) {
+    const { data, error } = await supabase.from("resources").insert([resourceData]).select().single()
 
     if (error) throw error
     return data
   },
 
-  // Get crisis resources
-  async getCrisisResources() {
-    const { data, error } = await supabase.rpc("get_crisis_resources")
-    if (error) throw error
-    return data || []
-  },
+  // Audio track operations
+  async getAudioTracks(filters?: { category?: string; is_public?: boolean }) {
+    let query = supabase.from("audio_tracks").select("*")
 
-  // Log crisis intervention
-  async logCrisisIntervention(
-    conversationId: string,
-    crisisLevel: number,
-    interventionType: string,
-    resourcesProvided: string[],
-    notes?: string,
-  ) {
-    const { data, error } = await supabase.rpc("log_crisis_intervention", {
-      p_conversation_id: conversationId,
-      p_crisis_level: crisisLevel,
-      p_intervention_type: interventionType,
-      p_resources_provided: resourcesProvided,
-      p_notes: notes,
-    })
-
-    if (error) throw error
-    return data
-  },
-
-  // Get audio tracks
-  async getAudioTracks(category?: string) {
-    let query = supabase
-      .from("audio_tracks")
-      .select("*")
-      .order("is_featured", { ascending: false })
-      .order("likes", { ascending: false })
-
-    if (category && category !== "all") {
-      query = query.eq("category", category)
+    if (filters?.category) {
+      query = query.eq("category", filters.category)
+    }
+    if (filters?.is_public !== undefined) {
+      query = query.eq("is_public", filters.is_public)
     }
 
-    const { data, error } = await query
-    if (error) throw error
-    return data || []
-  },
-
-  // Update audio track interaction
-  async recordAudioInteraction(trackId: string, interactionType: "like" | "play" | "download" | "share") {
-    const { data, error } = await supabase.from("user_audio_interactions").insert({
-      track_id: trackId,
-      interaction_type: interactionType,
-    })
+    const { data, error } = await query.order("created_at", { ascending: false })
 
     if (error) throw error
     return data
+  },
+
+  async getAudioTrackById(id: string) {
+    const { data, error } = await supabase.from("audio_tracks").select("*").eq("id", id).single()
+
+    if (error) throw error
+    return data
+  },
+
+  async incrementPlayCount(trackId: string) {
+    const { error } = await supabase.rpc("increment_play_count", { track_id: trackId })
+    if (error) throw error
+  },
+
+  // Event operations
+  async getEvents(filters?: { type?: string; is_public?: boolean; upcoming?: boolean }) {
+    let query = supabase.from("events").select("*")
+
+    if (filters?.type) {
+      query = query.eq("type", filters.type)
+    }
+    if (filters?.is_public !== undefined) {
+      query = query.eq("is_public", filters.is_public)
+    }
+    if (filters?.upcoming) {
+      query = query.gte("start_time", new Date().toISOString())
+    }
+
+    const { data, error } = await query.order("start_time")
+
+    if (error) throw error
+    return data
+  },
+
+  async createEvent(eventData: Partial<Event>) {
+    const { data, error } = await supabase.from("events").insert([eventData]).select().single()
+
+    if (error) throw error
+    return data
+  },
+
+  // Community post operations
+  async getCommunityPosts(filters?: { type?: string; is_public?: boolean; author_id?: string }) {
+    let query = supabase.from("community_posts").select("*")
+
+    if (filters?.type) {
+      query = query.eq("type", filters.type)
+    }
+    if (filters?.is_public !== undefined) {
+      query = query.eq("is_public", filters.is_public)
+    }
+    if (filters?.author_id) {
+      query = query.eq("author_id", filters.author_id)
+    }
+
+    const { data, error } = await query.order("created_at", { ascending: false })
+
+    if (error) throw error
+    return data
+  },
+
+  async createCommunityPost(postData: Partial<CommunityPost>) {
+    const { data, error } = await supabase.from("community_posts").insert([postData]).select().single()
+
+    if (error) throw error
+    return data
+  },
+
+  // OmniBot conversation operations
+  async saveConversation(conversationData: Partial<OmniBotConversation>) {
+    const { data, error } = await supabase.from("omni_bot_conversations").insert([conversationData]).select().single()
+
+    if (error) throw error
+    return data
+  },
+
+  async getConversationHistory(sessionId: string, userId?: string) {
+    let query = supabase.from("omni_bot_conversations").select("*").eq("session_id", sessionId)
+
+    if (userId) {
+      query = query.eq("user_id", userId)
+    }
+
+    const { data, error } = await query.order("timestamp")
+
+    if (error) throw error
+    return data
+  },
+
+  // Crisis session operations
+  async createCrisisSession(sessionData: {
+    user_id?: string
+    session_id: string
+    crisis_level: number
+    cultural_context: string[]
+    resources_provided: string[]
+    notes?: string
+  }) {
+    const { data, error } = await supabase.from("crisis_sessions").insert([sessionData]).select().single()
+
+    if (error) throw error
+    return data
+  },
+
+  // Notification operations
+  async createNotification(notificationData: {
+    user_id: string
+    title: string
+    message: string
+    type: "crisis" | "event" | "community" | "system" | "achievement"
+    action_url?: string
+    priority?: "low" | "normal" | "high" | "urgent"
+  }) {
+    const { data, error } = await supabase.from("notifications").insert([notificationData]).select().single()
+
+    if (error) throw error
+    return data
+  },
+
+  async getUserNotifications(userId: string, unreadOnly = false) {
+    let query = supabase.from("notifications").select("*").eq("user_id", userId)
+
+    if (unreadOnly) {
+      query = query.eq("is_read", false)
+    }
+
+    const { data, error } = await query.order("created_at", { ascending: false })
+
+    if (error) throw error
+    return data
+  },
+
+  async markNotificationAsRead(notificationId: string) {
+    const { error } = await supabase.from("notifications").update({ is_read: true }).eq("id", notificationId)
+
+    if (error) throw error
   },
 }
+
+// Real-time subscriptions
+export const subscriptions = {
+  // Subscribe to new community posts
+  subscribeToCommunityPosts(callback: (payload: any) => void) {
+    return supabase
+      .channel("community_posts")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "community_posts" }, callback)
+      .subscribe()
+  },
+
+  // Subscribe to user notifications
+  subscribeToUserNotifications(userId: string, callback: (payload: any) => void) {
+    return supabase
+      .channel(`notifications:${userId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "notifications",
+          filter: `user_id=eq.${userId}`,
+        },
+        callback,
+      )
+      .subscribe()
+  },
+
+  // Subscribe to events
+  subscribeToEvents(callback: (payload: any) => void) {
+    return supabase
+      .channel("events")
+      .on("postgres_changes", { event: "*", schema: "public", table: "events" }, callback)
+      .subscribe()
+  },
+}
+
+export default supabase
